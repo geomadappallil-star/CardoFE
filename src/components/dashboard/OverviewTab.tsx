@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   TrendingUp, TrendingDown, CloudRain, AlertTriangle, CheckCircle2, 
-  Layers, DollarSign, Scale, ArrowUpRight 
+  Layers, DollarSign, Scale, ArrowUpRight, MoveHorizontal 
 } from 'lucide-react';
-import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Brush } from 'recharts';
 import { DashboardSummary, PriceSeriesPoint } from '../../types/index.js';
 
 interface OverviewTabProps {
@@ -19,11 +19,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   loading,
   onNavigateTab
 }) => {
+  const chartMinWidth = useMemo(() => {
+    if (!priceSeries || priceSeries.length === 0) return 1000;
+    return Math.max(1000, priceSeries.length * 18);
+  }, [priceSeries]);
+
   if (loading && !summary) {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-slate-400">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm">Loading Spice Intelligence telemetry...</p>
+        <p className="text-sm">Connecting to Supabase Cloud Telemetry...</p>
       </div>
     );
   }
@@ -139,42 +144,62 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
-      {/* Main Chart: Price & Volume Trajectory */}
+      {/* Main Chart: Horizontally Scrollable Price & Volume Trajectory */}
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">Price Trajectory & Volume Dynamics</h3>
-            <p className="text-xs text-slate-400">Comparing unweighted average vs quantity-weighted mean price with arrival volumes</p>
+            <p className="text-xs text-slate-400">
+              Scroll left ↔ right or drag the bottom timeline slider to navigate the entire historical span
+            </p>
           </div>
-          <button 
-            onClick={() => onNavigateTab('prices')}
-            className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
-          >
-            <span>Detailed Price Dynamics</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 text-slate-300 text-xs font-mono">
+              <MoveHorizontal className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span>Scrollable ({priceSeries.length} points)</span>
+            </span>
+            <button 
+              onClick={() => onNavigateTab('prices')}
+              className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              <span>Full Price Dynamics</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
-        <div className="h-80 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={priceSeries.slice(-90)}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11 }} />
-              <YAxis yAxisId="left" stroke="#64748b" tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
-              <YAxis yAxisId="right" orientation="right" stroke="#64748b" tick={{ fontSize: 11 }} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
-                formatter={(val: any, name: string) => [
-                  name.includes('Price') ? `₹${Number(val).toLocaleString()}` : `${Number(val).toLocaleString()} kg`, 
-                  name
-                ]}
-              />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Bar yAxisId="right" dataKey="total_arrived_kg" fill="#334155" name="Arrivals (kg)" opacity={0.6} />
-              <Line yAxisId="left" type="monotone" dataKey="weighted_mean" stroke="#10b981" strokeWidth={2} dot={false} name="Weighted Mean Price (₹)" />
-              <Line yAxisId="left" type="monotone" dataKey="unweighted_mean" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Unweighted Mean (₹)" />
-            </ComposedChart>
-          </ResponsiveContainer>
+        {/* Scrollable Container */}
+        <div className="w-full overflow-x-auto overflow-y-hidden pb-4 border border-slate-800/80 rounded-xl bg-slate-950/70">
+          <div style={{ minWidth: `${chartMinWidth}px`, height: '390px' }} className="p-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={priceSeries}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11 }} minTickGap={20} />
+                <YAxis yAxisId="left" stroke="#64748b" tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
+                <YAxis yAxisId="right" orientation="right" stroke="#64748b" tick={{ fontSize: 11 }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                  formatter={(val: any, name: string) => [
+                    name.includes('Price') ? `₹${Number(val).toLocaleString()}` : `${Number(val).toLocaleString()} kg`, 
+                    name
+                  ]}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                <Bar yAxisId="right" dataKey="total_arrived_kg" fill="#334155" name="Arrivals (kg)" opacity={0.6} />
+                <Line yAxisId="left" type="monotone" dataKey="weighted_mean" stroke="#10b981" strokeWidth={2.2} dot={false} name="Weighted Mean Price (₹)" />
+                <Line yAxisId="left" type="monotone" dataKey="unweighted_mean" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Unweighted Mean (₹)" />
+
+                {/* Timeline slider navigator */}
+                <Brush 
+                  dataKey="date" 
+                  height={26} 
+                  stroke="#38bdf8" 
+                  fill="#090d16" 
+                  tickFormatter={(v) => v}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -183,7 +208,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">Recent Verified Auctions (Spices Board of India)</h3>
-            <p className="text-xs text-slate-400">Authoritative primary auction records with full provenance tracking</p>
+            <p className="text-xs text-slate-400">Authoritative primary auction records streamed directly from Supabase Cloud</p>
           </div>
           <span className="px-2.5 py-1 rounded text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5" />

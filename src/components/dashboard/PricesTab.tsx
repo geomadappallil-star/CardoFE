@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { 
   ResponsiveContainer, ComposedChart, Line, Bar, Area, XAxis, YAxis, 
-  Tooltip, CartesianGrid, Legend 
+  Tooltip, CartesianGrid, Legend, Brush 
 } from 'recharts';
 import { PriceSeriesPoint } from '../../types/index.js';
-import { TrendingUp, Scale, ArrowDown, ArrowUp, BarChart3 } from 'lucide-react';
+import { TrendingUp, Scale, ArrowDown, ArrowUp, BarChart3, MoveHorizontal } from 'lucide-react';
 
 interface PricesTabProps {
   priceSeries: PriceSeriesPoint[];
@@ -42,6 +42,14 @@ export const PricesTab: React.FC<PricesTabProps> = ({
       totalVolumeTonnes: Math.round(totalVolume / 1000)
     };
   }, [priceSeries]);
+
+  // Calculate dynamic width so data is never squeezed and scrolls smoothly from left to right
+  const chartMinWidth = useMemo(() => {
+    if (!priceSeries || priceSeries.length === 0) return 1000;
+    // For daily frequency (thousands of points) or monthly (128 points)
+    const perPoint = frequency === 'daily' ? 14 : 22;
+    return Math.max(1100, priceSeries.length * perPoint);
+  }, [priceSeries, frequency]);
 
   if (loading) {
     return (
@@ -92,57 +100,72 @@ export const PricesTab: React.FC<PricesTabProps> = ({
         </div>
       </div>
 
-      {/* Main Chart: Multi-Series Price Envelope */}
+      {/* Main Chart: Multi-Series Price Envelope with Horizontal Scroll & Timeline Navigator */}
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">
-              Price Dynamics Envelope & Auction Volumes ({frequency.toUpperCase()})
+              Complete Price Dynamics Envelope & Auction Volumes ({frequency.toUpperCase()})
             </h3>
             <p className="text-xs text-slate-400">
-              Shaded band captures Min-Max daily spreads; Green line tracks Quantity-Weighted mean price
+              Scroll horizontally (left ↔ right) or drag the timeline slider below to explore the entire 10-year span (2016–2026)
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500 inline-block" />
-            <span>Price Spread Envelope</span>
+          
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 text-xs font-medium">
+              <MoveHorizontal className="w-3.5 h-3.5 animate-pulse" />
+              <span>Scrollable: {priceSeries.length} points</span>
+            </span>
           </div>
         </div>
 
-        <div className="h-96 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={priceSeries}>
-              <defs>
-                <linearGradient id="priceSpreadGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11 }} minTickGap={30} />
-              <YAxis yAxisId="price" stroke="#64748b" tick={{ fontSize: 11 }} domain={['dataMin - 100', 'dataMax + 100']} />
-              <YAxis yAxisId="volume" orientation="right" stroke="#64748b" tick={{ fontSize: 11 }} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
-                formatter={(val: any, name: string) => [
-                  name.includes('Price') || name.includes('Mean') ? `₹${Number(val).toLocaleString()}` : `${Number(val).toLocaleString()} kg`, 
-                  name
-                ]}
-              />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
+        {/* Scrollable Container from Left to Right */}
+        <div className="w-full overflow-x-auto overflow-y-hidden pb-4 border border-slate-800/80 rounded-xl bg-slate-950/70">
+          <div style={{ minWidth: `${chartMinWidth}px`, height: '430px' }} className="p-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={priceSeries}>
+                <defs>
+                  <linearGradient id="priceSpreadGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11 }} minTickGap={20} />
+                <YAxis yAxisId="price" stroke="#64748b" tick={{ fontSize: 11 }} domain={['dataMin - 100', 'dataMax + 100']} />
+                <YAxis yAxisId="volume" orientation="right" stroke="#64748b" tick={{ fontSize: 11 }} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
+                  formatter={(val: any, name: string) => [
+                    name.includes('Price') || name.includes('Mean') ? `₹${Number(val).toLocaleString()}` : `${Number(val).toLocaleString()} kg`, 
+                    name
+                  ]}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
 
-              <Area yAxisId="price" type="monotone" dataKey="max_price" stroke="#059669" fill="url(#priceSpreadGradient)" name="Max Price (₹)" />
-              <Area yAxisId="price" type="monotone" dataKey="min_price" stroke="#047857" fill="#090d16" name="Min Price (₹)" />
-              <Line yAxisId="price" type="monotone" dataKey="weighted_mean" stroke="#34d399" strokeWidth={2.5} dot={false} name="Weighted Mean (₹)" />
-              <Line yAxisId="price" type="monotone" dataKey="unweighted_mean" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Unweighted Mean (₹)" />
-              <Bar yAxisId="volume" dataKey="total_arrived_kg" fill="#475569" opacity={0.4} name="Arrivals (kg)" />
-              <Bar yAxisId="volume" dataKey="total_sold_kg" fill="#3b82f6" opacity={0.6} name="Sold (kg)" />
-            </ComposedChart>
-          </ResponsiveContainer>
+                <Area yAxisId="price" type="monotone" dataKey="max_price" stroke="#059669" fill="url(#priceSpreadGradient)" name="Max Price (₹)" />
+                <Area yAxisId="price" type="monotone" dataKey="min_price" stroke="#047857" fill="#090d16" name="Min Price (₹)" />
+                <Line yAxisId="price" type="monotone" dataKey="weighted_mean" stroke="#34d399" strokeWidth={2.5} dot={false} name="Weighted Mean (₹)" />
+                <Line yAxisId="price" type="monotone" dataKey="unweighted_mean" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Unweighted Mean (₹)" />
+                <Bar yAxisId="volume" dataKey="total_arrived_kg" fill="#475569" opacity={0.4} name="Arrivals (kg)" />
+                <Bar yAxisId="volume" dataKey="total_sold_kg" fill="#3b82f6" opacity={0.6} name="Sold (kg)" />
+
+                {/* Timeline slider navigator */}
+                <Brush 
+                  dataKey="date" 
+                  height={28} 
+                  stroke="#10b981" 
+                  fill="#090d16" 
+                  tickFormatter={(v) => v}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-      {/* Auction Structure & Trust Architecture Note */}
+      {/* Analytical Trust Note */}
       <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex items-start gap-3">
         <div className="p-2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 shrink-0">
           <BarChart3 className="w-4 h-4" />

@@ -1,4 +1,4 @@
-// CardoFE Supabase Direct Cloud Client
+// CardoFE Supabase Direct Cloud Client with Full Range Pagination
 const SUPABASE_URL = 'https://thgczdlokjrxzakncgwd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoZ2N6ZGxva2pyeHpha25jZ3dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0OTcwMTAsImV4cCI6MjEwNTA3MzAxMH0.dVg7vSUacM9vs8qn3XNC7fK9WaWQbEdlY0l95Arj1FY';
 
@@ -8,7 +8,6 @@ const HEADERS = {
   'Content-Type': 'application/json',
 };
 
-// Spice Code to ID mapping cache
 const SPICE_MAP: Record<string, number> = {
   'small_cardamom': 1,
   'black_pepper': 2,
@@ -16,28 +15,55 @@ const SPICE_MAP: Record<string, number> = {
   'cloves': 4,
 };
 
+// Helper to fetch ALL records across PostgREST 1000-item page limit
+async function fetchAllPages(baseUrl: string, pageSize = 1000): Promise<any[]> {
+  const allRows: any[] = [];
+  let from = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const to = from + pageSize - 1;
+    try {
+      const res = await fetch(baseUrl, {
+        headers: {
+          ...HEADERS,
+          'Range': `${from}-${to}`,
+        },
+      });
+      if (!res.ok) break;
+      const rows = await res.json();
+      if (!Array.isArray(rows) || rows.length === 0) break;
+      allRows.push(...rows);
+      if (rows.length < pageSize) {
+        hasMore = false;
+      } else {
+        from += pageSize;
+      }
+    } catch (e) {
+      console.error('Error in fetchAllPages:', e);
+      break;
+    }
+  }
+
+  return allRows;
+}
+
 export async function fetchSummary(spiceCode: string = 'small_cardamom') {
   const spiceId = SPICE_MAP[spiceCode] || 1;
 
   // 1. Latest Price
   const priceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&order=date.desc,id.desc&limit=1`;
   const pastPriceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&date=lte.2026-08-15&order=date.desc&limit=1`;
-  
-  // 2. Weather Status
   const weatherUrl = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.2&order=date.desc&limit=30`;
-
-  // 3. Recent Auctions
   const recentUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&order=date.desc,id.desc&limit=8`;
-
-  // 4. Production Overview
   const prodUrl = `${SUPABASE_URL}/rest/v1/fact_production?spice_id=eq.${spiceId}&period_start=gte.2026-01-01`;
 
   const [priceRes, pastRes, weatherRes, recentRes, prodRes] = await Promise.all([
-    fetch(priceUrl, { headers: HEADERS }).then(r => r.json()),
-    fetch(pastPriceUrl, { headers: HEADERS }).then(r => r.json()),
-    fetch(weatherUrl, { headers: HEADERS }).then(r => r.json()),
-    fetch(recentUrl, { headers: HEADERS }).then(r => r.json()),
-    fetch(prodUrl, { headers: HEADERS }).then(r => r.json()),
+    fetch(priceUrl, { headers: HEADERS }).then(r => r.json()).catch(() => []),
+    fetch(pastPriceUrl, { headers: HEADERS }).then(r => r.json()).catch(() => []),
+    fetch(weatherUrl, { headers: HEADERS }).then(r => r.json()).catch(() => []),
+    fetch(recentUrl, { headers: HEADERS }).then(r => r.json()).catch(() => []),
+    fetch(prodUrl, { headers: HEADERS }).then(r => r.json()).catch(() => []),
   ]);
 
   const latest = priceRes && priceRes[0] ? priceRes[0] : null;
@@ -47,7 +73,6 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
     change30d = Math.round(((latest.avg_price - past.avg_price) / past.avg_price) * 1000) / 10;
   }
 
-  // Calculate weather anomaly from last 30 days
   let rainSum = 0;
   let baseSum = 0;
   if (Array.isArray(weatherRes)) {
@@ -62,7 +87,6 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
   if (rainPct < -20) weatherState = 'DEFICIT';
   else if (rainPct > 20) weatherState = 'EXCESS';
 
-  // Production breakdown
   let idukkiProd = 15100;
   let keralaProd = 19359;
   let indiaProd = 22510;
@@ -151,13 +175,11 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
 
 export async function fetchPrices(params: { spice: string; from: string; to: string; frequency: string }) {
   const spiceId = SPICE_MAP[params.spice] || 1;
-  const url = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&date=gte.${params.from}&date=lte.${params.to}&order=date.asc&limit=3000`;
-  const res = await fetch(url, { headers: HEADERS });
-  const rows = await res.json();
+  const url = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&date=gte.${params.from}&date=lte.${params.to}&order=date.asc`;
+  
+  // Uses pagination helper to fetch the entire multi-year range without 1000-row cutoff
+  const rows = await fetchAllPages(url);
 
-  if (!Array.isArray(rows)) return { data: [] };
-
-  // Aggregate in client based on frequency (daily, monthly, annual)
   const grouped: Record<string, {
     prices: number[];
     weighted_sum: number;
@@ -225,11 +247,8 @@ export async function fetchPrices(params: { spice: string; from: string; to: str
 }
 
 export async function fetchWeather(params: { from: string; to: string; frequency: string }) {
-  const url = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.2&date=gte.${params.from}&date=lte.${params.to}&order=date.asc&limit=4000`;
-  const res = await fetch(url, { headers: HEADERS });
-  const rows = await res.json();
-
-  if (!Array.isArray(rows)) return { data: [] };
+  const url = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.2&date=gte.${params.from}&date=lte.${params.to}&order=date.asc`;
+  const rows = await fetchAllPages(url);
 
   if (params.frequency === 'daily') {
     return {
@@ -299,10 +318,7 @@ export async function fetchWeather(params: { from: string; to: string; frequency
 export async function fetchProduction(spiceCode: string) {
   const spiceId = SPICE_MAP[spiceCode] || 1;
   const url = `${SUPABASE_URL}/rest/v1/fact_production?spice_id=eq.${spiceId}&order=period_start.asc`;
-  const res = await fetch(url, { headers: HEADERS });
-  const rows = await res.json();
-
-  if (!Array.isArray(rows)) return { data: [] };
+  const rows = await fetchAllPages(url);
 
   const regionNames: Record<number, string> = { 1: 'Kerala', 2: 'Idukki' };
   const countryNames: Record<number, string> = { 1: 'India', 2: 'Guatemala', 3: 'Vietnam', 4: 'Indonesia' };
@@ -329,10 +345,7 @@ export async function fetchProduction(spiceCode: string) {
 export async function fetchTrade(spiceCode: string) {
   const spiceId = SPICE_MAP[spiceCode] || 1;
   const url = `${SUPABASE_URL}/rest/v1/fact_trade?spice_id=eq.${spiceId}&order=period_start.desc`;
-  const res = await fetch(url, { headers: HEADERS });
-  const rows = await res.json();
-
-  if (!Array.isArray(rows)) return { data: [] };
+  const rows = await fetchAllPages(url);
 
   const cMap: Record<number, string> = {
     1: 'India', 2: 'Guatemala', 3: 'Vietnam', 4: 'Indonesia', 5: 'Madagascar',
@@ -359,10 +372,7 @@ export async function fetchTrade(spiceCode: string) {
 export async function fetchConsumption(spiceCode: string) {
   const spiceId = SPICE_MAP[spiceCode] || 1;
   const url = `${SUPABASE_URL}/rest/v1/fact_consumption?spice_id=eq.${spiceId}&order=year.asc`;
-  const res = await fetch(url, { headers: HEADERS });
-  const rows = await res.json();
-
-  if (!Array.isArray(rows)) return { data: [] };
+  const rows = await fetchAllPages(url);
 
   const cMap: Record<number, string> = { 1: 'India', 9: 'Saudi Arabia' };
 
@@ -383,15 +393,13 @@ export async function fetchConsumption(spiceCode: string) {
 
 export async function fetchSources() {
   const url = `${SUPABASE_URL}/rest/v1/dim_source?order=id.asc`;
-  const res = await fetch(url, { headers: HEADERS });
-  const rows = await res.json();
-  return { data: Array.isArray(rows) ? rows : [] };
+  const rows = await fetchAllPages(url);
+  return { data: rows };
 }
 
 export async function fetchQuality() {
   const url = `${SUPABASE_URL}/rest/v1/data_quality_run?order=id.desc&limit=5`;
-  const res = await fetch(url, { headers: HEADERS });
-  const rows = await res.json();
+  const rows = await fetchAllPages(url);
   return {
     data: {
       quality_breakdown: [
@@ -399,12 +407,11 @@ export async function fetchQuality() {
         { quality_status: 'OFFICIAL_ESTIMATE', count: 170 },
       ],
       total_records: 11098,
-      runs: Array.isArray(rows) ? rows : [],
+      runs: rows,
     }
   };
 }
 
-// Client-side Extrapolation Simulation powered by trailing Supabase data
 export async function fetchExtrapolation(payload: {
   spice: string;
   horizon_months: number;
@@ -414,10 +421,9 @@ export async function fetchExtrapolation(payload: {
   inflation_pct?: number;
 }) {
   const spiceId = SPICE_MAP[payload.spice] || 1;
-  const histUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&order=date.desc&limit=365`;
-  const histRes = await fetch(histUrl, { headers: HEADERS }).then(r => r.json());
+  const histUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&order=date.desc&limit=500`;
+  const histRes = await fetch(histUrl, { headers: HEADERS }).then(r => r.json()).catch(() => []);
 
-  // Group trailing 12 months
   const monthlyPrices: Record<string, { sum: number; count: number; qty: number }> = {};
   if (Array.isArray(histRes)) {
     histRes.forEach((r: any) => {

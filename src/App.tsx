@@ -21,7 +21,7 @@ export function App() {
   const searchParams = new URLSearchParams(window.location.search);
   const [spice, setSpice] = useState(searchParams.get('spice') || 'small_cardamom');
   const [scope, setScope] = useState(searchParams.get('scope') || 'idukki');
-  const [dateRangePreset, setDateRangePreset] = useState(searchParams.get('range') || '3Y');
+  const [dateRangePreset, setDateRangePreset] = useState(searchParams.get('range') || 'ALL');
   const [frequency, setFrequency] = useState(searchParams.get('frequency') || 'monthly');
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   
@@ -50,7 +50,7 @@ export function App() {
 
   const getDateBounds = useCallback(() => {
     const to = '2026-09-15';
-    let from = '2023-09-15';
+    let from = '2016-01-01';
     if (dateRangePreset === '1Y') from = '2025-09-15';
     else if (dateRangePreset === '3Y') from = '2023-09-15';
     else if (dateRangePreset === '5Y') from = '2021-09-15';
