@@ -8,6 +8,7 @@ import { TradeTab } from './components/dashboard/TradeTab.js';
 import { ExtrapolationTab } from './components/dashboard/ExtrapolationTab.js';
 import { ProvenanceTab } from './components/dashboard/ProvenanceTab.js';
 import { ExportModal } from './components/modals/ExportModal.js';
+import { SpiceChatbot } from './components/chatbot/SpiceChatbot.js';
 import { 
   fetchSummary, fetchPrices, fetchWeather, 
   fetchProduction, fetchTrade, fetchConsumption 
@@ -188,6 +189,22 @@ export function App() {
         onClose={() => setIsExportOpen(false)}
         priceSeries={priceSeries}
         spice={spice}
+      />
+
+      <SpiceChatbot
+        context={{
+          spice,
+          scope,
+          frequency,
+          dateRangePreset,
+          summary,
+          priceSeries,
+          weatherData,
+          productionData,
+          tradeData,
+          consumptionData,
+        }}
+        onNavigateTab={setActiveTab}
       />
     </div>
   );
