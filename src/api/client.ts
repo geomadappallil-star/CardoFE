@@ -65,7 +65,7 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom', scope: 
   // Market filter based on scope
   let marketFilter = '';
   if (spiceId === 1) {
-    if (scope === 'idukki' || scope === 'kerala') marketFilter = '&market_id=eq.2';
+    if (scope === 'idukki' || scope === 'kerala') marketFilter = '&market_id=in.(2,3)';
     else if (scope === 'bodinayakanur') marketFilter = '&market_id=eq.1';
   }
 
@@ -73,7 +73,7 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom', scope: 
   const priceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=1`;
   const pastPriceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&date=lte.2026-08-15&order=date.desc&limit=1`;
   const weatherUrl = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.${weatherCfg.id}&order=date.desc&limit=30`;
-  const recentUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=8`;
+  const recentUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=12`;
   const prodUrl = `${SUPABASE_URL}/rest/v1/fact_production?spice_id=eq.${spiceId}&period_start=gte.2026-01-01`;
 
   const [priceRes, pastRes, weatherRes, recentRes, prodRes] = await Promise.all([
@@ -169,9 +169,19 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom', scope: 
       spice_code: spiceCode,
       spice_name: spiceNames[spiceCode] || spiceCode,
       seller_or_auctioneer: r.seller_or_auctioneer || 'Certified Exchange',
-      market_name: r.seller_or_auctioneer?.includes('CPMC') || r.seller_or_auctioneer?.includes('SPCL')
-        ? 'Bodinayakanur (TN)'
-        : (r.market_id === 5 ? 'Kochi Spot' : (r.market_id === 6 ? 'Kottayam / Kalpetta' : 'Vandanmettu (Idukki)')),
+      market_name: (() => {
+        const s = (r.seller_or_auctioneer || '').toLowerCase();
+        if (s.includes('kumily')) return 'Kumily (Idukki)';
+        if (Number(r.market_id) === 1 || s.includes('cpmc') || s.includes('spcl') || s.includes('sugandhagiri') || s.includes('growersforever') || s.includes('rns') || s.includes('green house')) {
+          return 'Bodinayakanur (TN)';
+        }
+        if (Number(r.market_id) === 2 || s.includes('vandanmettu') || s.includes('puttady') || s.includes('climate') || s.includes('online') || s.includes('speciality') || s.includes('mahila') || s.includes('traditional')) {
+          return 'Puttady / Vandanmettu (Idukki)';
+        }
+        if (Number(r.market_id) === 5) return 'Kochi Spot';
+        if (Number(r.market_id) === 6) return 'Kottayam / Kalpetta';
+        return 'Vandanmettu (Idukki)';
+      })(),
       price_type: r.price_type,
       min_price: Number(r.min_price),
       max_price: Number(r.max_price),
