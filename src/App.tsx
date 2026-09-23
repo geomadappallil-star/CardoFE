@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './components/layout/Navbar.js';
+import { DailyAuctionTab } from './components/dashboard/DailyAuctionTab.js';
 import { OverviewTab } from './components/dashboard/OverviewTab.js';
 import { PricesTab } from './components/dashboard/PricesTab.js';
 import { WeatherTab } from './components/dashboard/WeatherTab.js';
@@ -23,10 +24,10 @@ import { logVisitorEvent } from './api/visitorTracker.js';
 export function App() {
   const searchParams = new URLSearchParams(window.location.search);
   const [spice, setSpice] = useState(searchParams.get('spice') || 'small_cardamom');
-  const [scope, setScope] = useState(searchParams.get('scope') || 'idukki');
+  const [scope, setScope] = useState(searchParams.get('scope') || 'all');
   const [dateRangePreset, setDateRangePreset] = useState(searchParams.get('range') || 'ALL');
   const [frequency, setFrequency] = useState(searchParams.get('frequency') || 'monthly');
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'daily_auction');
   
   const [language, setLanguage] = useState<Language>(() => {
     const urlLang = searchParams.get('lang') as Language;
@@ -149,6 +150,15 @@ export function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {activeTab === 'daily_auction' && (
+          <DailyAuctionTab
+            summary={summary}
+            language={language}
+            loading={loading}
+            onNavigateTab={setActiveTab}
+          />
+        )}
+
         {activeTab === 'overview' && (
           <OverviewTab
             summary={summary}

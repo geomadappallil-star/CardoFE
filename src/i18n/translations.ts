@@ -42,6 +42,7 @@ export interface Translations {
 
   // Navigation Tabs
   tabs: {
+    dailyAuction: string;
     overview: string;
     prices: string;
     weather: string;
@@ -49,6 +50,28 @@ export interface Translations {
     trade: string;
     extrapolations: string;
     provenance: string;
+  };
+
+  // Daily Auction Landing Tab
+  dailyAuctionTab: {
+    heroTitle: string;
+    heroSubtitle: string;
+    sessionBadge: string;
+    dayAvgPrice: string;
+    dayPeakPrice: string;
+    dayFloorPrice: string;
+    dayTotalVolume: string;
+    soldVolume: string;
+    clearance: string;
+    lots: string;
+    priceSpread: string;
+    auctioneerCardsTitle: string;
+    priceCorridor: string;
+    tableTitle: string;
+    toggleLatest: string;
+    toggleRecent: string;
+    vsPrevDay: string;
+    noAuctionsFound: string;
   };
 
   // Overview Tab
@@ -210,6 +233,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     tabs: {
+      dailyAuction: 'Daily Auction Price',
       overview: 'Executive Overview',
       prices: 'Price Dynamics',
       weather: 'Monsoon & Climate',
@@ -217,6 +241,27 @@ export const translations: Record<Language, Translations> = {
       trade: 'Trade Flows',
       extrapolations: 'Scenario Models',
       provenance: 'Data Provenance',
+    },
+
+    dailyAuctionTab: {
+      heroTitle: 'Daily Small Cardamom E-Auction Realizations',
+      heroSubtitle: 'Official certified auction results directly from Spices Board of India auction centers',
+      sessionBadge: 'Latest E-Auction Session',
+      dayAvgPrice: 'Day Weighted Average',
+      dayPeakPrice: 'Day Peak Price (Max)',
+      dayFloorPrice: 'Day Floor Price (Min)',
+      dayTotalVolume: 'Total Arrivals & Sold',
+      soldVolume: 'Sold Volume',
+      clearance: 'Clearance Rate',
+      lots: 'Lots',
+      priceSpread: 'Price Spectrum',
+      auctioneerCardsTitle: 'Participating Licensed Auction Houses',
+      priceCorridor: 'Price Corridor',
+      tableTitle: 'ARCHIVE - DAILY AUCTION PRICE OF SMALL CARDAMOM',
+      toggleLatest: 'Today\'s Auctions Only',
+      toggleRecent: 'Recent Sessions (Past 7 Days)',
+      vsPrevDay: 'vs previous auction',
+      noAuctionsFound: 'No auction records found for this date.',
     },
 
     overview: {
@@ -369,6 +414,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     tabs: {
+      dailyAuction: 'ദിവസേനയുള്ള ലേലവില',
       overview: 'പൊതുവിവരം',
       prices: 'വില നിലവാരം',
       weather: 'കാലാവസ്ഥ & മഴ',
@@ -376,6 +422,27 @@ export const translations: Record<Language, Translations> = {
       trade: 'കയറ്റുമതി & വിപണി',
       extrapolations: 'വില പ്രവചനങ്ങൾ',
       provenance: 'വിവര ഉറവിടങ്ങൾ',
+    },
+
+    dailyAuctionTab: {
+      heroTitle: 'ചെറിയ ഏലം ദിവസേനയുള്ള ലേല വിവരങ്ങൾ',
+      heroSubtitle: 'സ്പൈസസ് ബോർഡ് ഓഫ് ഇന്ത്യ ഔദ്യോഗിക കേന്ദ്രങ്ങളിലെ തത്സമയ ലേല നിരക്കുകൾ',
+      sessionBadge: 'ഏറ്റവും പുതിയ ഇ-ലേലം',
+      dayAvgPrice: 'ദിവസത്തെ ശരാശരി വില',
+      dayPeakPrice: 'പരമാവധി വില (Peak)',
+      dayFloorPrice: 'കുറഞ്ഞ വില (Floor)',
+      dayTotalVolume: 'ആകെ വരവും വിറ്റതും',
+      soldVolume: 'വിറ്റ അളവ്',
+      clearance: 'വിൽപന നിരക്ക്',
+      lots: 'ലോട്ടുകൾ',
+      priceSpread: 'വില വിസ്തൃതി',
+      auctioneerCardsTitle: 'ലേലം നടത്തിയ ലൈസൻസുള്ള കമ്പനികൾ',
+      priceCorridor: 'വില നിലവാരം',
+      tableTitle: 'ARCHIVE - DAILY AUCTION PRICE OF SMALL CARDAMOM',
+      toggleLatest: 'ഇന്നത്തെ ലേലങ്ങൾ മാത്രം',
+      toggleRecent: 'സമീപകാല ലേലങ്ങൾ (കഴിഞ്ഞ 7 ദിവസം)',
+      vsPrevDay: 'മുമ്പത്തെ ലേലവുമായി താരതമ്യം',
+      noAuctionsFound: 'ഈ തീയതിയിൽ ലേല വിവരങ്ങൾ ലഭ്യമല്ല.',
     },
 
     overview: {

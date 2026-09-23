@@ -69,6 +69,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   const tabs = [
+    { id: 'daily_auction', label: t.tabs.dailyAuction, highlight: true },
     { id: 'overview', label: t.tabs.overview },
     { id: 'prices', label: t.tabs.prices },
     { id: 'weather', label: t.tabs.weather },
