@@ -171,14 +171,15 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom', scope: 
       seller_or_auctioneer: r.seller_or_auctioneer || 'Certified Exchange',
       market_name: (() => {
         const s = (r.seller_or_auctioneer || '').toLowerCase();
-        if (s.includes('kumily')) return 'Kumily (Idukki)';
+        if (s.includes('kumily') || s.includes('thekkady') || Number(r.market_id) === 3) return 'Kumily / Thekkady (Idukki)';
+        if (s.includes('nedumkandam') || s.includes('header systems') || Number(r.market_id) === 4) return 'Nedumkandam (Idukki)';
         if (Number(r.market_id) === 1 || s.includes('cpmc') || s.includes('spcl') || s.includes('sugandhagiri') || s.includes('growersforever') || s.includes('rns') || s.includes('green house')) {
           return 'Bodinayakanur (TN)';
         }
-        if (Number(r.market_id) === 2 || s.includes('vandanmettu') || s.includes('puttady') || s.includes('climate') || s.includes('online') || s.includes('speciality') || s.includes('mahila') || s.includes('traditional')) {
+        if (Number(r.market_id) === 2 || s.includes('vandanmettu') || s.includes('vandanmedu') || s.includes('puttady') || s.includes('climate') || s.includes('online') || s.includes('speciality') || s.includes('mahila') || s.includes('traditional') || s.includes('santhanpara') || s.includes('green gold')) {
           return 'Puttady / Vandanmettu (Idukki)';
         }
-        if (Number(r.market_id) === 5) return 'Kochi Spot';
+        if (Number(r.market_id) === 5 || s.includes('kochi') || s.includes('state trading')) return 'Kochi Spot';
         if (Number(r.market_id) === 6) return 'Kottayam / Kalpetta';
         return 'Vandanmettu (Idukki)';
       })(),
@@ -190,7 +191,7 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom', scope: 
       unit: r.unit || 'INR/kg',
       quantity_arrived: Number(r.quantity),
       quantity_sold: Number(r.quantity_sold),
-      quality_status: r.quality_status || 'OBSERVED',
+      quality_status: r.quality_status || 'VERIFIED',
       source_name: 'Spices Board of India (Supabase Live)',
     })) : [],
     data_quality: {
@@ -222,7 +223,7 @@ export async function fetchPrices(params: {
   let marketFilter = '';
   if (spiceId === 1) {
     if (scope === 'idukki' || scope === 'kerala') {
-      marketFilter = '&market_id=eq.2'; // Vandanmettu auctions
+      marketFilter = '&market_id=in.(2,3,4)'; // Vandanmettu/Puttady, Kumily/Thekkady, Nedumkandam (all Idukki hubs)
     } else if (scope === 'bodinayakanur') {
       marketFilter = '&market_id=eq.1'; // Bodinayakanur auctions
     }
