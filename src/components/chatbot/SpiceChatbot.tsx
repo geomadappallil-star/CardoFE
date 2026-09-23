@@ -3,7 +3,7 @@ import {
   Bot, X, Send, Sparkles, MessageSquare, ChevronRight, 
   RotateCcw, ArrowUpRight, Zap, HelpCircle 
 } from 'lucide-react';
-import { answerQuery, QueryEngineContext, BotMessage } from './smartQueryEngine.js';
+import { answerQuery, QueryEngineContext, BotMessage, getSpiceSpecificSuggestions } from './smartQueryEngine.js';
 import { Language, translations } from '../../i18n/translations.js';
 
 interface SpiceChatbotProps {
@@ -11,23 +11,6 @@ interface SpiceChatbotProps {
   language?: Language;
   onNavigateTab: (tab: string) => void;
 }
-
-const INITIAL_SUGGESTIONS_EN = [
-  "What is the current cardamom price?",
-  "Compare Vandanmettu vs Bodinayakanur",
-  "Why did prices spike in 2019?",
-  "How is the monsoon rainfall right now?",
-  "How much does Idukki produce?",
-  "Where does India export cardamom to?"
-];
-
-const INITIAL_SUGGESTIONS_ML = [
-  "ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?",
-  "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
-  "ഇടുക്കിയിലെ ഉത്പാദനം എത്രയാണ്?",
-  "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
-  "വണ്ടൻമേടും ബോഡിനായ്ക്കന്നൂരും തമ്മിലുള്ള വ്യത്യാസം?"
-];
 
 export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, language = 'en', onNavigateTab }) => {
   const t = translations[language] || translations.en;
@@ -41,43 +24,30 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, language = 
   const curSpice = spiceNames[context.spice] || spiceNames.small_cardamom;
 
   const initialSuggestions = React.useMemo(() => {
-    if (language === 'ml') {
-      return [
-        `ഇപ്പോഴത്തെ ${curSpice.ml} വില എത്രയാണ്?`,
-        "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
-        `ഇടുക്കിയിലെ ${curSpice.ml} ഉത്പാദനം എത്രയാണ്?`,
-        "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
-        "വണ്ടൻമേടും ബോഡിനായ്ക്കന്നൂരും തമ്മിലുള്ള വ്യത്യാസം?"
-      ];
-    }
-    return [
-      `What is the current ${curSpice.en.toLowerCase()} price?`,
-      "Compare Vandanmettu vs Bodinayakanur",
-      "Why did prices spike in 2019?",
-      "How is the monsoon rainfall right now?",
-      `How much ${curSpice.en.toLowerCase()} does Idukki produce?`,
-      `Where does India export ${curSpice.en.toLowerCase()} to?`
-    ];
-  }, [language, curSpice]);
+    return getSpiceSpecificSuggestions(context.spice, language);
+  }, [context.spice, language]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  const getInitialBotMsg = (): BotMessage => ({
-    id: 'welcome',
-    sender: 'bot',
-    text: language === 'ml' 
-      ? `👋 **കാർഡോ ബോർഡ് സുഗന്ധവ്യഞ്ജന AI അസിസ്റ്റന്റിലേക്ക് സ്വാഗതം!**\n\nസ്പൈസസ് ബോർഡ് ലേലങ്ങൾ, പശ്ചിമഘട്ട കാലാവസ്ഥ, ഉത്പാദനം, കയറ്റുമതി എന്നിവയെക്കുറിച്ചുള്ള തത്സമയ വിവരങ്ങൾ എന്നിൽ ലഭ്യമാണ്.\n\nതാഴെ പറയുന്ന ചോദ്യങ്ങൾ ചോദിക്കുകയോ നിങ്ങൾക്ക് ആവശ്യമുള്ളത് ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം:`
-      : `👋 **Welcome to Cardo Board Spice Intelligence AI!**\n\nI am your live analytical assistant. I have real-time access to our verified Spices Board auctions, Western Ghats climate models, and UN Comtrade telemetry.\n\nHow can I help you today?`,
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    suggestions: initialSuggestions.slice(0, 3),
-    badge: language === 'ml' ? 'സഹായത്തിന് സജ്ജം' : 'Spice AI',
-  });
+  const getInitialBotMsg = (): BotMessage => {
+    const spiceSuggestions = getSpiceSpecificSuggestions(context.spice, language);
+    return {
+      id: 'welcome',
+      sender: 'bot',
+      text: language === 'ml' 
+        ? `👋 **കാർഡോ ബോർഡ് ${curSpice.ml} AI അസിസ്റ്റന്റിലേക്ക് സ്വാഗതം!**\n\n${curSpice.ml} വിലനിലവാരം, ലേല കേന്ദ്രങ്ങൾ, കാലാവസ്ഥ, ഉത്പാദനം, കയറ്റുമതി എന്നിവയെക്കുറിച്ചുള്ള തത്സമയ വിവരങ്ങൾ എന്നിൽ ലഭ്യമാണ്.\n\nതാഴെ പറയുന്ന ചോദ്യങ്ങൾ ചോദിക്കുകയോ നിങ്ങൾക്ക് ആവശ്യമുള്ളത് ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം:`
+        : `👋 **Welcome to Cardo Board ${curSpice.en} Intelligence AI!**\n\nI am your live analytical assistant with dedicated telemetry for **${curSpice.en}**. I have real-time access to verified auctions, Western Ghats climate models, and export trade telemetry.\n\nHow can I help you today?`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      suggestions: spiceSuggestions.slice(0, 3),
+      badge: language === 'ml' ? `${curSpice.ml} AI` : `${curSpice.en} AI`,
+    };
+  };
 
   const [messages, setMessages] = useState<BotMessage[]>([getInitialBotMsg()]);
 
-  // When language changes, update initial message if user hasn't started chatting
+  // When language or active spice changes, update initial message if user hasn't started chatting
   useEffect(() => {
     setMessages(prev => {
       if (prev.length <= 1) {
@@ -85,7 +55,7 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, language = 
       }
       return prev;
     });
-  }, [language]);
+  }, [language, context.spice]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
