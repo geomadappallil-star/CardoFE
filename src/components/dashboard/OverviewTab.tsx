@@ -11,6 +11,8 @@ interface OverviewTabProps {
   priceSeries: PriceSeriesPoint[];
   weatherData?: WeatherPoint[];
   dateRangePreset?: string;
+  scope?: string;
+  frequency?: string;
   loading: boolean;
   onNavigateTab: (tab: string) => void;
 }
@@ -20,13 +22,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   priceSeries,
   weatherData = [],
   dateRangePreset = 'ALL',
+  scope = 'all',
+  frequency = 'monthly',
   loading,
   onNavigateTab
 }) => {
   const chartMinWidth = useMemo(() => {
     if (!priceSeries || priceSeries.length === 0) return 1000;
-    return Math.max(1000, priceSeries.length * 18);
-  }, [priceSeries]);
+    const perPoint = frequency === 'daily' ? 14 : (frequency === 'annual' ? 60 : 18);
+    return Math.max(1000, priceSeries.length * perPoint);
+  }, [priceSeries, frequency]);
 
   const rangeBadge = useMemo(() => {
     switch (dateRangePreset) {
@@ -37,6 +42,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       default: return 'Selected Period';
     }
   }, [dateRangePreset]);
+
+  const scopeLabel = useMemo(() => {
+    switch (scope) {
+      case 'idukki': return 'Idukki (Vandanmettu)';
+      case 'bodinayakanur': return 'Bodinayakanur (TN)';
+      case 'kerala': return 'Kerala Composite';
+      case 'india': return 'India (National)';
+      case 'world': return 'World / Global';
+      default: return 'All Markets';
+    }
+  }, [scope]);
+
+  const freqLabel = useMemo(() => {
+    switch (frequency) {
+      case 'daily': return 'Daily';
+      case 'annual': return 'Annual';
+      default: return 'Monthly';
+    }
+  }, [frequency]);
 
   // Recalculate metrics dynamically based on the active timeframe
   const periodPriceStats = useMemo(() => {
@@ -87,7 +111,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     };
   }, [priceSeries, summary]);
 
-  // Dynamic Weather metrics for the active timeframe
+  // Dynamic Weather metrics for the active timeframe and region
   const periodWeatherStats = useMemo(() => {
     if (!weatherData || weatherData.length === 0) {
       return summary?.weather_status;
@@ -106,14 +130,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     else if (pct > 15) status = 'EXCESS';
 
     return {
-      region: 'Idukki Western Ghats',
-      month: rangeBadge,
+      region: scopeLabel,
+      month: `${rangeBadge} (${freqLabel})`,
       rainfall_actual_mm: Math.round(rainSum),
       rainfall_baseline_mm: Math.round(baseSum),
       anomaly_pct: pct,
       status,
     };
-  }, [weatherData, rangeBadge, summary]);
+  }, [weatherData, rangeBadge, freqLabel, scopeLabel, summary]);
 
   const prod = summary?.production_overview;
   const isUp = periodPriceStats.changePct >= 0;
@@ -129,18 +153,25 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      {/* Timeframe Active Banner - Mobile Friendly */}
-      <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
-        <div className="flex items-center gap-2 text-slate-300">
-          <Calendar className="w-4 h-4 text-emerald-400" />
-          <span className="font-semibold text-white">Active Timeframe:</span>
-          <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-medium">
-            {rangeBadge}
+      {/* Dynamic Filters Banner - Mobile Friendly */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-slate-300">
+          <span className="font-semibold text-white flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 text-emerald-400" /> Active Filters:
           </span>
-          <span className="hidden sm:inline text-slate-400">({priceSeries.length} points aggregated)</span>
+          <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/60 font-medium">
+            Place: {scopeLabel}
+          </span>
+          <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/60 font-medium">
+            Freq: {freqLabel}
+          </span>
+          <span className="px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800/60 font-medium">
+            Range: {rangeBadge}
+          </span>
+          <span className="hidden sm:inline text-slate-400 font-mono text-[11px]">({priceSeries.length} points aggregated)</span>
         </div>
         <span className="text-[11px] text-slate-400">
-          All KPI metrics below update dynamically
+          All metrics update dynamically
         </span>
       </div>
 
@@ -260,7 +291,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <div>
             <h3 className="text-sm font-semibold text-white">Price Trajectory & Volume Dynamics</h3>
             <p className="text-xs text-slate-400">
-              Historical price envelope & market arrivals ({rangeBadge})
+              Historical price envelope & market arrivals ({scopeLabel} • {freqLabel} • {rangeBadge})
             </p>
           </div>
           <div className="flex items-center gap-2">

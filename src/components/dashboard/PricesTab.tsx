@@ -9,6 +9,7 @@ import { TrendingUp, Scale, ArrowDown, ArrowUp, BarChart3, MoveHorizontal } from
 interface PricesTabProps {
   priceSeries: PriceSeriesPoint[];
   spice: string;
+  scope?: string;
   frequency: string;
   loading: boolean;
 }
@@ -16,9 +17,21 @@ interface PricesTabProps {
 export const PricesTab: React.FC<PricesTabProps> = ({
   priceSeries,
   spice,
+  scope = 'all',
   frequency,
   loading
 }) => {
+  const scopeLabel = useMemo(() => {
+    switch (scope) {
+      case 'idukki': return 'Idukki (Vandanmettu)';
+      case 'bodinayakanur': return 'Bodinayakanur (TN)';
+      case 'kerala': return 'Kerala Composite';
+      case 'india': return 'India (National)';
+      case 'world': return 'World / Global Export';
+      default: return 'All Domestic Markets';
+    }
+  }, [scope]);
+
   const stats = useMemo(() => {
     if (!priceSeries || priceSeries.length === 0) return null;
     let high = 0;
@@ -46,9 +59,8 @@ export const PricesTab: React.FC<PricesTabProps> = ({
   // Calculate dynamic width so data is never squeezed and scrolls smoothly from left to right
   const chartMinWidth = useMemo(() => {
     if (!priceSeries || priceSeries.length === 0) return 1000;
-    // For daily frequency (thousands of points) or monthly (128 points)
-    const perPoint = frequency === 'daily' ? 14 : 22;
-    return Math.max(1100, priceSeries.length * perPoint);
+    const perPoint = frequency === 'daily' ? 14 : (frequency === 'annual' ? 65 : 22);
+    return Math.max(900, priceSeries.length * perPoint);
   }, [priceSeries, frequency]);
 
   if (loading) {
@@ -64,16 +76,16 @@ export const PricesTab: React.FC<PricesTabProps> = ({
       {/* Price Statistics Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-          <span className="text-xs text-slate-400">Period Peak (Max Price)</span>
+          <span className="text-xs text-slate-400">Period Peak ({scopeLabel})</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold text-emerald-400">₹{stats?.high.toLocaleString()}</span>
             <span className="text-xs text-slate-500">/ kg</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-1 block">Historic peak during 2019 flood recovery</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">Maximum auction price realization</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-          <span className="text-xs text-slate-400">Period Low (Min Price)</span>
+          <span className="text-xs text-slate-400">Period Floor ({scopeLabel})</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold text-amber-400">₹{stats?.low.toLocaleString()}</span>
             <span className="text-xs text-slate-500">/ kg</span>
@@ -82,12 +94,12 @@ export const PricesTab: React.FC<PricesTabProps> = ({
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-          <span className="text-xs text-slate-400">Volume-Weighted Average</span>
+          <span className="text-xs text-slate-400">Weighted Average ({frequency.toUpperCase()})</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold text-white">₹{stats?.avg.toLocaleString()}</span>
             <span className="text-xs text-slate-500">/ kg</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-1 block">Σ(Price × Qty) / Σ(Qty) weighted metric</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">Σ(Price × Qty) / Σ(Qty) dynamic metric</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
@@ -105,10 +117,10 @@ export const PricesTab: React.FC<PricesTabProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">
-              Complete Price Dynamics Envelope & Auction Volumes ({frequency.toUpperCase()})
+              Price Dynamics Envelope & Volumes ({scopeLabel} • {frequency.toUpperCase()})
             </h3>
             <p className="text-xs text-slate-400">
-              Scroll horizontally (left ↔ right) or drag the timeline slider below to explore the entire 10-year span (2016–2026)
+              Scroll horizontally (left ↔ right) or drag the timeline slider below to inspect dynamically aggregated points
             </p>
           </div>
           

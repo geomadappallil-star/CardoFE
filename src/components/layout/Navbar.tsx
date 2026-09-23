@@ -40,7 +40,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   const scopes = [
+    { code: 'all', label: 'All' },
     { code: 'idukki', label: 'Idukki' },
+    { code: 'bodinayakanur', label: 'Bodinayakanur' },
     { code: 'kerala', label: 'Kerala' },
     { code: 'india', label: 'India' },
     { code: 'world', label: 'World' },

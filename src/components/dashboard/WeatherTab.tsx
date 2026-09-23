@@ -8,22 +8,74 @@ import { CloudRain, Thermometer, Droplets, AlertOctagon, Sun, MoveHorizontal } f
 
 interface WeatherTabProps {
   weatherData: WeatherPoint[];
+  scope?: string;
+  frequency?: string;
   loading: boolean;
 }
 
 export const WeatherTab: React.FC<WeatherTabProps> = ({
   weatherData,
+  scope = 'all',
+  frequency = 'monthly',
   loading
 }) => {
+  const climateMeta = useMemo(() => {
+    switch (scope) {
+      case 'bodinayakanur':
+        return {
+          name: 'Bodinayakanur (Tamil Nadu Leeward)',
+          normal: '~850 mm',
+          normalSub: 'Rain-Shadow East Slope Climatological Normal',
+          events: 'Severe Heat Spells & Rain-Shadow Deficit',
+          eventsSub: 'Low humidity increases estate borehole reliance',
+          temp: '21.0°C — 36.5°C',
+          tempSub: 'Theni Basin & Leeward Foot-hill Microclimate',
+        };
+      case 'kerala':
+        return {
+          name: 'Kerala Statewide Composite',
+          normal: '~2,800 mm',
+          normalSub: 'Statewide Climatological Precipitation Normal',
+          events: 'SW & NE Monsoon Dual System Volatility',
+          eventsSub: 'Statewide hydrology regulates spice output',
+          temp: '22.0°C — 33.0°C',
+          tempSub: 'Humid Tropical Coastal & Mid-Elevation Regime',
+        };
+      case 'world':
+        return {
+          name: 'Alta Verapaz (Guatemala Belt)',
+          normal: '~2,200 mm',
+          normalSub: 'Central American Cloud Forest Climatology',
+          events: 'Atlantic Tropical Storms & Dry El Niño',
+          eventsSub: 'Impacts international export competition',
+          temp: '16.0°C — 27.0°C',
+          tempSub: 'Subtropical Highland Rain-Forest Microclimate',
+        };
+      case 'idukki':
+      default:
+        return {
+          name: 'Idukki Western Ghats High Ranges',
+          normal: '~3,050 mm',
+          normalSub: '1991-2020 Climatological Annual Normal',
+          events: 'Aug 2018 Flood & 2023 Drought Stress',
+          eventsSub: 'Directly drove cardamom price volatility',
+          temp: '14.5°C — 28.5°C',
+          tempSub: 'Cardamom Hill Reserve (1,000m - 1,400m MSL)',
+        };
+    }
+  }, [scope]);
+
   const chartMinWidth = useMemo(() => {
     if (!weatherData || weatherData.length === 0) return 1000;
-    return Math.max(1100, weatherData.length * 20);
-  }, [weatherData]);
+    const perPoint = frequency === 'daily' ? 14 : (frequency === 'annual' ? 65 : 20);
+    return Math.max(900, weatherData.length * perPoint);
+  }, [weatherData, frequency]);
 
   const subChartMinWidth = useMemo(() => {
     if (!weatherData || weatherData.length === 0) return 600;
-    return Math.max(650, weatherData.length * 12);
-  }, [weatherData]);
+    const perPoint = frequency === 'daily' ? 8 : (frequency === 'annual' ? 45 : 14);
+    return Math.max(600, weatherData.length * perPoint);
+  }, [weatherData, frequency]);
 
   if (loading) {
     return (
@@ -35,42 +87,42 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Weather Header Callouts */}
+      {/* Weather Header Callouts - Dynamic to Scope */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold">
             <CloudRain className="w-4 h-4" />
-            <span>Idukki Western Ghats Climatology</span>
+            <span>{climateMeta.name}</span>
           </div>
-          <p className="mt-2 text-xl font-bold text-white">~3,050 mm</p>
-          <span className="text-xs text-slate-400">1991-2020 Climatological Annual Normal</span>
+          <p className="mt-2 text-xl font-bold text-white">{climateMeta.normal}</p>
+          <span className="text-xs text-slate-400">{climateMeta.normalSub}</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold">
             <AlertOctagon className="w-4 h-4" />
-            <span>Extreme Climatological Events</span>
+            <span>{climateMeta.events}</span>
           </div>
-          <p className="mt-2 text-xl font-bold text-white">Aug 2018 Flood & 2023 Drought</p>
-          <span className="text-xs text-slate-400">Directly drove cardamom price volatility</span>
+          <p className="mt-2 text-xl font-bold text-white">Climatic Shocks</p>
+          <span className="text-xs text-slate-400">{climateMeta.eventsSub}</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
             <Thermometer className="w-4 h-4" />
-            <span>High Range Temperature Regime</span>
+            <span>Temperature Regime ({frequency.toUpperCase()})</span>
           </div>
-          <p className="mt-2 text-xl font-bold text-white">14.5°C — 28.5°C</p>
-          <span className="text-xs text-slate-400">Cardamom Hill Reserve (1,000m - 1,400m MSL)</span>
+          <p className="mt-2 text-xl font-bold text-white">{climateMeta.temp}</p>
+          <span className="text-xs text-slate-400">{climateMeta.tempSub}</span>
         </div>
       </div>
 
-      {/* Monthly Rainfall vs 1991-2020 Baseline */}
+      {/* Rainfall vs Baseline */}
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">
-              Observed Precipitation vs 1991–2020 Normal Baseline
+              Observed Precipitation vs Normal Baseline ({climateMeta.name} • {frequency.toUpperCase()})
             </h3>
             <p className="text-xs text-slate-400">
               Scroll horizontally (left ↔ right) or drag the timeline slider below to inspect weather history across all years

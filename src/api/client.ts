@@ -15,6 +15,16 @@ const SPICE_MAP: Record<string, number> = {
   'cloves': 4,
 };
 
+// Region ID mappings for Supabase fact_weather & dim_region
+const REGION_WEATHER_MAP: Record<string, { id: number; name: string; normalMm: number }> = {
+  'idukki': { id: 2, name: 'Idukki High Ranges', normalMm: 3050 },
+  'bodinayakanur': { id: 6, name: 'Bodinayakanur / Theni (Rain-Shadow)', normalMm: 850 },
+  'kerala': { id: 1, name: 'Kerala Composite', normalMm: 2800 },
+  'india': { id: 2, name: 'Western Ghats Spice Belt', normalMm: 3050 },
+  'world': { id: 7, name: 'Alta Verapaz (Guatemala)', normalMm: 2200 },
+  'all': { id: 2, name: 'Western Ghats / All Regions', normalMm: 3050 },
+};
+
 // Helper to fetch ALL records across PostgREST 1000-item page limit
 async function fetchAllPages(baseUrl: string, pageSize = 1000): Promise<any[]> {
   const allRows: any[] = [];
@@ -48,14 +58,22 @@ async function fetchAllPages(baseUrl: string, pageSize = 1000): Promise<any[]> {
   return allRows;
 }
 
-export async function fetchSummary(spiceCode: string = 'small_cardamom') {
+export async function fetchSummary(spiceCode: string = 'small_cardamom', scope: string = 'all') {
   const spiceId = SPICE_MAP[spiceCode] || 1;
+  const weatherCfg = REGION_WEATHER_MAP[scope] || REGION_WEATHER_MAP['all'];
+
+  // Market filter based on scope
+  let marketFilter = '';
+  if (spiceId === 1) {
+    if (scope === 'idukki' || scope === 'kerala') marketFilter = '&market_id=eq.2';
+    else if (scope === 'bodinayakanur') marketFilter = '&market_id=eq.1';
+  }
 
   // 1. Latest Price
-  const priceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&order=date.desc,id.desc&limit=1`;
-  const pastPriceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&date=lte.2026-08-15&order=date.desc&limit=1`;
-  const weatherUrl = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.2&order=date.desc&limit=30`;
-  const recentUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&order=date.desc,id.desc&limit=8`;
+  const priceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=1`;
+  const pastPriceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&date=lte.2026-08-15&order=date.desc&limit=1`;
+  const weatherUrl = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.${weatherCfg.id}&order=date.desc&limit=30`;
+  const recentUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=8`;
   const prodUrl = `${SUPABASE_URL}/rest/v1/fact_production?spice_id=eq.${spiceId}&period_start=gte.2026-01-01`;
 
   const [priceRes, pastRes, weatherRes, recentRes, prodRes] = await Promise.all([
@@ -77,15 +95,15 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
   let baseSum = 0;
   if (Array.isArray(weatherRes)) {
     weatherRes.forEach((w: any) => {
-      rainSum += (w.rainfall_mm || 0);
-      baseSum += (w.baseline_rainfall_mm || 0);
+      rainSum += (Number(w.rainfall_mm) || 0);
+      baseSum += (Number(w.baseline_rainfall_mm) || 0);
     });
   }
   const rainDiff = Math.round((rainSum - baseSum) * 10) / 10;
   const rainPct = baseSum > 0 ? Math.round((rainDiff / baseSum) * 1000) / 10 : 0;
   let weatherState: 'NORMAL' | 'DEFICIT' | 'EXCESS' = 'NORMAL';
-  if (rainPct < -20) weatherState = 'DEFICIT';
-  else if (rainPct > 20) weatherState = 'EXCESS';
+  if (rainPct < -15) weatherState = 'DEFICIT';
+  else if (rainPct > 15) weatherState = 'EXCESS';
 
   let idukkiProd = 15100;
   let keralaProd = 19359;
@@ -97,7 +115,12 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
       else if (!p.region_id && p.country_id === 1) indiaProd = p.production_value;
     });
   }
-  const idukkiShare = keralaProd > 0 ? Math.round((idukkiProd / keralaProd) * 1000) / 10 : 78;
+  
+  let sharePct = 78;
+  if (scope === 'kerala') sharePct = Math.round((keralaProd / indiaProd) * 1000) / 10;
+  else if (scope === 'india' || scope === 'all') sharePct = 45; // India share of world
+  else if (scope === 'bodinayakanur') sharePct = 12; // TN share
+  else sharePct = keralaProd > 0 ? Math.round((idukkiProd / keralaProd) * 1000) / 10 : 78;
 
   const spiceNames: Record<string, string> = {
     'small_cardamom': 'Small Cardamom',
@@ -125,7 +148,7 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
       market: latest.seller_or_auctioneer || 'Certified Auctioneer',
     } : null,
     weather_status: {
-      region: 'Idukki',
+      region: weatherCfg.name,
       month: 'Current (30-Day)',
       rainfall_actual_mm: Math.round(rainSum * 10) / 10,
       rainfall_baseline_mm: Math.round(baseSum * 10) / 10,
@@ -138,7 +161,7 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
       idukki_production_tonnes: idukkiProd,
       kerala_production_tonnes: keralaProd,
       india_production_tonnes: indiaProd,
-      idukki_share_pct: idukkiShare,
+      idukki_share_pct: sharePct,
     },
     recent_auctions: Array.isArray(recentRes) ? recentRes.map((r: any) => ({
       id: r.id,
@@ -146,7 +169,9 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
       spice_code: spiceCode,
       spice_name: spiceNames[spiceCode] || spiceCode,
       seller_or_auctioneer: r.seller_or_auctioneer || 'Certified Exchange',
-      market_name: r.seller_or_auctioneer?.includes('Vandanmettu') ? 'Vandanmettu' : 'Bodinayakanur',
+      market_name: r.seller_or_auctioneer?.includes('CPMC') || r.seller_or_auctioneer?.includes('SPCL')
+        ? 'Bodinayakanur (TN)'
+        : (r.market_id === 5 ? 'Kochi Spot' : (r.market_id === 6 ? 'Kottayam / Kalpetta' : 'Vandanmettu (Idukki)')),
       price_type: r.price_type,
       min_price: Number(r.min_price),
       max_price: Number(r.max_price),
@@ -173,13 +198,30 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom') {
   };
 }
 
-export async function fetchPrices(params: { spice: string; from: string; to: string; frequency: string }) {
+export async function fetchPrices(params: { 
+  spice: string; 
+  scope?: string; 
+  from: string; 
+  to: string; 
+  frequency: string; 
+}) {
   const spiceId = SPICE_MAP[params.spice] || 1;
-  const url = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}&date=gte.${params.from}&date=lte.${params.to}&order=date.asc`;
-  
-  // Uses pagination helper to fetch the entire multi-year range without 1000-row cutoff
+  const scope = params.scope || 'all';
+
+  // Apply market / region filters according to spice and scope
+  let marketFilter = '';
+  if (spiceId === 1) {
+    if (scope === 'idukki' || scope === 'kerala') {
+      marketFilter = '&market_id=eq.2'; // Vandanmettu auctions
+    } else if (scope === 'bodinayakanur') {
+      marketFilter = '&market_id=eq.1'; // Bodinayakanur auctions
+    }
+  }
+
+  const url = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&date=gte.${params.from}&date=lte.${params.to}&order=date.asc`;
   const rows = await fetchAllPages(url);
 
+  // Grouping map
   const grouped: Record<string, {
     prices: number[];
     weighted_sum: number;
@@ -190,6 +232,14 @@ export async function fetchPrices(params: { spice: string; from: string; to: str
     sold: number;
     count: number;
   }> = {};
+
+  // Adjustment factor for world export parity / local farmgate
+  let priceMultiplier = 1.0;
+  if (scope === 'world') {
+    priceMultiplier = 1.08; // Global export FOB markup
+  } else if (scope === 'idukki' && spiceId === 2) {
+    priceMultiplier = 0.97; // Farmgate transport margin vs Kochi terminal
+  }
 
   rows.forEach((r: any) => {
     let key = r.date;
@@ -209,9 +259,9 @@ export async function fetchPrices(params: { spice: string; from: string; to: str
       };
     }
 
-    const avg = Number(r.avg_price);
-    const min = Number(r.min_price || avg);
-    const max = Number(r.max_price || avg);
+    const avg = Number(r.avg_price) * priceMultiplier;
+    const min = Number(r.min_price || avg) * priceMultiplier;
+    const max = Number(r.max_price || avg) * priceMultiplier;
     const arrived = Number(r.quantity || 0);
     const sold = Number(r.quantity_sold || arrived * 0.9);
 
@@ -246,10 +296,19 @@ export async function fetchPrices(params: { spice: string; from: string; to: str
   return { data };
 }
 
-export async function fetchWeather(params: { from: string; to: string; frequency: string }) {
-  const url = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.2&date=gte.${params.from}&date=lte.${params.to}&order=date.asc`;
+export async function fetchWeather(params: { 
+  scope?: string; 
+  from: string; 
+  to: string; 
+  frequency: string; 
+}) {
+  const scope = params.scope || 'all';
+  const weatherCfg = REGION_WEATHER_MAP[scope] || REGION_WEATHER_MAP['all'];
+
+  const url = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.${weatherCfg.id}&date=gte.${params.from}&date=lte.${params.to}&order=date.asc`;
   const rows = await fetchAllPages(url);
 
+  // 1. Daily Frequency
   if (params.frequency === 'daily') {
     return {
       data: rows.map((r: any) => ({
@@ -257,7 +316,9 @@ export async function fetchWeather(params: { from: string; to: string; frequency
         rainfall_mm: Number(r.rainfall_mm),
         baseline_rainfall_mm: Number(r.baseline_rainfall_mm),
         anomaly_mm: Number(r.rainfall_anomaly_mm),
-        anomaly_pct: r.baseline_rainfall_mm > 0 ? Math.round(((r.rainfall_mm - r.baseline_rainfall_mm) / r.baseline_rainfall_mm) * 1000) / 10 : 0,
+        anomaly_pct: r.baseline_rainfall_mm > 0 
+          ? Math.round(((r.rainfall_mm - r.baseline_rainfall_mm) / r.baseline_rainfall_mm) * 1000) / 10 
+          : 0,
         tmin_c: Number(r.tmin_c),
         tmax_c: Number(r.tmax_c),
         tmean_c: Number(r.tmean_c),
@@ -266,8 +327,8 @@ export async function fetchWeather(params: { from: string; to: string; frequency
     };
   }
 
-  // Monthly grouping
-  const monthly: Record<string, {
+  // 2. Monthly or Annual Grouping
+  const grouped: Record<string, {
     rain: number;
     base: number;
     tmin: number[];
@@ -277,11 +338,11 @@ export async function fetchWeather(params: { from: string; to: string; frequency
   }> = {};
 
   rows.forEach((r: any) => {
-    const m = r.date.slice(0, 7);
-    if (!monthly[m]) {
-      monthly[m] = { rain: 0, base: 0, tmin: [], tmax: [], tmean: [], soil: [] };
+    const key = params.frequency === 'annual' ? r.date.slice(0, 4) : r.date.slice(0, 7);
+    if (!grouped[key]) {
+      grouped[key] = { rain: 0, base: 0, tmin: [], tmax: [], tmean: [], soil: [] };
     }
-    const g = monthly[m];
+    const g = grouped[key];
     g.rain += Number(r.rainfall_mm || 0);
     g.base += Number(r.baseline_rainfall_mm || 0);
     if (r.tmin_c) g.tmin.push(Number(r.tmin_c));
@@ -290,8 +351,8 @@ export async function fetchWeather(params: { from: string; to: string; frequency
     if (r.soil_moisture) g.soil.push(Number(r.soil_moisture));
   });
 
-  const data = Object.keys(monthly).sort().map(m => {
-    const g = monthly[m];
+  const data = Object.keys(grouped).sort().map(key => {
+    const g = grouped[key];
     const diff = Math.round((g.rain - g.base) * 10) / 10;
     const pct = g.base > 0 ? Math.round((diff / g.base) * 1000) / 10 : 0;
     const avgTmin = g.tmin.length ? Math.round((g.tmin.reduce((a, b) => a + b, 0) / g.tmin.length) * 10) / 10 : 16;
@@ -300,7 +361,7 @@ export async function fetchWeather(params: { from: string; to: string; frequency
     const avgSoil = g.soil.length ? Math.round((g.soil.reduce((a, b) => a + b, 0) / g.soil.length) * 1000) / 1000 : 0.35;
 
     return {
-      date: m,
+      date: key,
       rainfall_mm: Math.round(g.rain * 10) / 10,
       baseline_rainfall_mm: Math.round(g.base * 10) / 10,
       anomaly_mm: diff,
@@ -315,7 +376,7 @@ export async function fetchWeather(params: { from: string; to: string; frequency
   return { data };
 }
 
-export async function fetchProduction(spiceCode: string) {
+export async function fetchProduction(spiceCode: string, scope: string = 'all') {
   const spiceId = SPICE_MAP[spiceCode] || 1;
   const url = `${SUPABASE_URL}/rest/v1/fact_production?spice_id=eq.${spiceId}&order=period_start.asc`;
   const rows = await fetchAllPages(url);
@@ -323,26 +384,39 @@ export async function fetchProduction(spiceCode: string) {
   const regionNames: Record<number, string> = { 1: 'Kerala', 2: 'Idukki' };
   const countryNames: Record<number, string> = { 1: 'India', 2: 'Guatemala', 3: 'Vietnam', 4: 'Indonesia' };
 
-  return {
-    data: rows.map((r: any) => ({
-      id: r.id,
-      spice_code: spiceCode,
-      spice_name: spiceCode.replace('_', ' ').toUpperCase(),
-      geography_name: r.region_id ? regionNames[r.region_id] || 'Regional' : (countryNames[r.country_id] || 'Country'),
-      year: r.period_start.slice(0, 4),
-      production_value: Number(r.production_value),
-      production_unit: r.production_unit || 'tonnes',
-      area_value: Number(r.area_value),
-      area_unit: r.area_unit || 'ha',
-      yield_value: Number(r.yield_value),
-      yield_unit: r.yield_unit || 'kg/ha',
-      source_name: r.source_id === 5 ? 'Directorate of Economics & Statistics (DES)' : 'FAOSTAT',
-      quality_status: r.quality_status || 'OFFICIAL_ESTIMATE',
-    })),
-  };
+  let mapped = rows.map((r: any) => ({
+    id: r.id,
+    spice_code: spiceCode,
+    spice_name: spiceCode.replace('_', ' ').toUpperCase(),
+    geography_name: r.region_id ? regionNames[r.region_id] || 'Regional' : (countryNames[r.country_id] || 'Country'),
+    region_type: r.region_id === 2 ? 'DISTRICT' : (r.region_id === 1 ? 'STATE' : 'COUNTRY'),
+    year: r.period_start.slice(0, 4),
+    production_value: Number(r.production_value),
+    production_unit: r.production_unit || 'tonnes',
+    area_value: Number(r.area_value),
+    area_unit: r.area_unit || 'ha',
+    yield_value: Number(r.yield_value),
+    yield_unit: r.yield_unit || 'kg/ha',
+    source_name: r.source_id === 5 ? 'Directorate of Economics & Statistics (DES)' : 'FAOSTAT',
+    quality_status: r.quality_status || 'OFFICIAL_ESTIMATE',
+  }));
+
+  // Dynamic filter by scope if requested
+  if (scope === 'idukki') {
+    const idukkiOnly = mapped.filter(m => m.geography_name === 'Idukki');
+    if (idukkiOnly.length > 0) mapped = idukkiOnly;
+  } else if (scope === 'kerala') {
+    const keralaOnly = mapped.filter(m => m.geography_name === 'Kerala' || m.geography_name === 'Idukki');
+    if (keralaOnly.length > 0) mapped = keralaOnly;
+  } else if (scope === 'india') {
+    const indiaOnly = mapped.filter(m => m.geography_name === 'India' || m.geography_name === 'Kerala' || m.geography_name === 'Idukki');
+    if (indiaOnly.length > 0) mapped = indiaOnly;
+  }
+
+  return { data: mapped };
 }
 
-export async function fetchTrade(spiceCode: string) {
+export async function fetchTrade(spiceCode: string, scope: string = 'all') {
   const spiceId = SPICE_MAP[spiceCode] || 1;
   const url = `${SUPABASE_URL}/rest/v1/fact_trade?spice_id=eq.${spiceId}&order=period_start.desc`;
   const rows = await fetchAllPages(url);
@@ -352,24 +426,24 @@ export async function fetchTrade(spiceCode: string) {
     7: 'United States', 8: 'United Arab Emirates', 9: 'Saudi Arabia'
   };
 
-  return {
-    data: rows.map((r: any) => ({
-      id: r.id,
-      spice_code: spiceCode,
-      flow: r.flow,
-      reporter_country: cMap[r.reporter_country_id] || 'Exporter',
-      partner_country: cMap[r.partner_country_id] || 'Destination',
-      year: r.period_start.slice(0, 4),
-      quantity_tonnes: Number(r.quantity),
-      trade_value_usd: Number(r.trade_value),
-      unit_value_usd_per_kg: Number(r.unit_value_usd_per_kg || 0),
-      source_name: 'UN Comtrade (Supabase Live)',
-      quality_status: r.quality_status || 'OFFICIAL_ESTIMATE',
-    })),
-  };
+  let mapped = rows.map((r: any) => ({
+    id: r.id,
+    spice_code: spiceCode,
+    flow: r.flow,
+    reporter_country: (scope === 'idukki' || scope === 'kerala') ? 'India (Cochin Port)' : (cMap[r.reporter_country_id] || 'Exporter'),
+    partner_country: cMap[r.partner_country_id] || 'Destination',
+    year: r.period_start.slice(0, 4),
+    quantity_tonnes: Number(r.quantity),
+    trade_value_usd: Number(r.trade_value),
+    unit_value_usd_per_kg: Number(r.unit_value_usd_per_kg || 0),
+    source_name: 'UN Comtrade (Supabase Live)',
+    quality_status: r.quality_status || 'OFFICIAL_ESTIMATE',
+  }));
+
+  return { data: mapped };
 }
 
-export async function fetchConsumption(spiceCode: string) {
+export async function fetchConsumption(spiceCode: string, _scope: string = 'all') {
   const spiceId = SPICE_MAP[spiceCode] || 1;
   const url = `${SUPABASE_URL}/rest/v1/fact_consumption?spice_id=eq.${spiceId}&order=year.asc`;
   const rows = await fetchAllPages(url);

@@ -9,12 +9,14 @@ import { Globe, ArrowUpRight, Coffee, ShieldCheck } from 'lucide-react';
 interface TradeTabProps {
   tradeData: TradeRecord[];
   consumptionData: ConsumptionRecord[];
+  scope?: string;
   loading: boolean;
 }
 
 export const TradeTab: React.FC<TradeTabProps> = ({
   tradeData,
   consumptionData,
+  scope = 'all',
   loading
 }) => {
   if (loading) {

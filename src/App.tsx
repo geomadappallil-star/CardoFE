@@ -65,12 +65,12 @@ export function App() {
 
     try {
       const [sumRes, priceRes, weatherRes, prodRes, tradeRes, consRes] = await Promise.all([
-        fetchSummary(spice),
-        fetchPrices({ spice, from, to, frequency }),
-        fetchWeather({ from, to, frequency }),
-        fetchProduction(spice),
-        fetchTrade(spice),
-        fetchConsumption(spice),
+        fetchSummary(spice, scope),
+        fetchPrices({ spice, scope, from, to, frequency }),
+        fetchWeather({ scope, from, to, frequency }),
+        fetchProduction(spice, scope),
+        fetchTrade(spice, scope),
+        fetchConsumption(spice, scope),
       ]);
 
       setSummary(sumRes);
@@ -85,7 +85,7 @@ export function App() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [spice, frequency, getDateBounds]);
+  }, [spice, scope, frequency, getDateBounds]);
 
   useEffect(() => {
     loadData();
@@ -125,6 +125,8 @@ export function App() {
             priceSeries={priceSeries}
             weatherData={weatherData}
             dateRangePreset={dateRangePreset}
+            scope={scope}
+            frequency={frequency}
             loading={loading}
             onNavigateTab={setActiveTab}
           />
@@ -134,6 +136,7 @@ export function App() {
           <PricesTab
             priceSeries={priceSeries}
             spice={spice}
+            scope={scope}
             frequency={frequency}
             loading={loading}
           />
@@ -142,6 +145,8 @@ export function App() {
         {activeTab === 'weather' && (
           <WeatherTab
             weatherData={weatherData}
+            scope={scope}
+            frequency={frequency}
             loading={loading}
           />
         )}
@@ -149,6 +154,7 @@ export function App() {
         {activeTab === 'production' && (
           <ProductionTab
             productionData={productionData}
+            scope={scope}
             loading={loading}
           />
         )}
@@ -157,6 +163,7 @@ export function App() {
           <TradeTab
             tradeData={tradeData}
             consumptionData={consumptionData}
+            scope={scope}
             loading={loading}
           />
         )}

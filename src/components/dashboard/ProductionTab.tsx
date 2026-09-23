@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
   CartesianGrid, Legend 
@@ -8,14 +8,27 @@ import { Sprout, MapPin, Award, Layers } from 'lucide-react';
 
 interface ProductionTabProps {
   productionData: ProductionRecord[];
+  scope?: string;
   loading: boolean;
 }
 
 export const ProductionTab: React.FC<ProductionTabProps> = ({
   productionData,
+  scope = 'all',
   loading
 }) => {
   const [selectedMetric, setSelectedMetric] = useState<'production' | 'area' | 'yield'>('production');
+
+  const scopeLabel = useMemo(() => {
+    switch (scope) {
+      case 'idukki': return 'Idukki District';
+      case 'bodinayakanur': return 'Tamil Nadu / Bodinayakanur';
+      case 'kerala': return 'Kerala Statewide';
+      case 'india': return 'All India';
+      case 'world': return 'Global / FAOSTAT';
+      default: return 'All Geographies';
+    }
+  }, [scope]);
 
   if (loading) {
     return (
@@ -49,7 +62,9 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       {/* Metric Selector & Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-900 border border-slate-800">
         <div>
-          <h3 className="text-sm font-semibold text-white">Agricultural Production & Cultivation Dynamics</h3>
+          <h3 className="text-sm font-semibold text-white">
+            Agricultural Production & Cultivation Dynamics ({scopeLabel})
+          </h3>
           <p className="text-xs text-slate-400">Official government statistics (DES India & FAOSTAT) spanning 2016–2026</p>
         </div>
         <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
