@@ -5,11 +5,13 @@ import {
 } from 'recharts';
 import { WeatherPoint } from '../../types/index.js';
 import { CloudRain, Thermometer, Droplets, AlertOctagon, Sun, MoveHorizontal } from 'lucide-react';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface WeatherTabProps {
   weatherData: WeatherPoint[];
   scope?: string;
   frequency?: string;
+  language?: Language;
   loading: boolean;
 }
 
@@ -17,8 +19,10 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
   weatherData,
   scope = 'all',
   frequency = 'monthly',
+  language = 'en',
   loading
 }) => {
+  const t = translations[language] || translations.en;
   const climateMeta = useMemo(() => {
     switch (scope) {
       case 'bodinayakanur':
@@ -110,7 +114,7 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
             <Thermometer className="w-4 h-4" />
-            <span>Temperature Regime ({frequency.toUpperCase()})</span>
+            <span>{t.weather.tempRegimeTitle} ({t.frequencies[frequency as keyof typeof t.frequencies] || frequency})</span>
           </div>
           <p className="mt-2 text-xl font-bold text-white">{climateMeta.temp}</p>
           <span className="text-xs text-slate-400">{climateMeta.tempSub}</span>
@@ -122,10 +126,10 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">
-              Observed Precipitation vs Normal Baseline ({climateMeta.name} • {frequency.toUpperCase()})
+              {t.weather.rainVsNormTitle} ({climateMeta.name} • {t.frequencies[frequency as keyof typeof t.frequencies] || frequency})
             </h3>
             <p className="text-xs text-slate-400">
-              Scroll horizontally (left ↔ right) or drag the timeline slider below to inspect weather history across all years
+              {t.weather.rainVsNormSubtitle}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -170,9 +174,9 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h3 className="text-sm font-semibold text-white">Rainfall Anomaly (% Deviation from Normal)</h3>
+            <h3 className="text-sm font-semibold text-white">{t.weather.anomalyTitle}</h3>
             <p className="text-xs text-slate-400">
-              Positive values indicate excess precipitation / flood conditions; negative values indicate dry spells / drought stress
+              {t.weather.anomalySubtitle}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -216,12 +220,12 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-white">High Range Temperature Bands (°C)</h3>
+            <h3 className="text-sm font-semibold text-white">{t.weather.tempBandsTitle}</h3>
             <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
               <MoveHorizontal className="w-3 h-3 text-rose-400" /> Scrollable
             </span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">Minimum, maximum, and mean daily temperatures in Idukki</p>
+          <p className="text-xs text-slate-400 mb-4">{t.weather.tempBandsSubtitle}</p>
           <div className="w-full overflow-x-auto overflow-y-hidden pb-3 border border-slate-800/80 rounded-xl bg-slate-950/70">
             <div style={{ minWidth: `${subChartMinWidth}px`, height: '280px' }} className="p-2">
               <ResponsiveContainer width="100%" height="100%">
@@ -242,12 +246,12 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
 
         <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-white">Volumetric Soil Moisture Index</h3>
+            <h3 className="text-sm font-semibold text-white">{t.weather.soilMoistureTitle}</h3>
             <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
               <MoveHorizontal className="w-3 h-3 text-emerald-400" /> Scrollable
             </span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">Topsoil moisture (0-7cm) vital for cardamom root systems</p>
+          <p className="text-xs text-slate-400 mb-4">{t.weather.soilMoistureSubtitle}</p>
           <div className="w-full overflow-x-auto overflow-y-hidden pb-3 border border-slate-800/80 rounded-xl bg-slate-950/70">
             <div style={{ minWidth: `${subChartMinWidth}px`, height: '280px' }} className="p-2">
               <ResponsiveContainer width="100%" height="100%">

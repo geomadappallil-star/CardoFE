@@ -338,7 +338,7 @@ export const ExtrapolationTab: React.FC<ExtrapolationTabProps> = ({ spice }) => 
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="text-sm font-semibold text-white">Scenario Projection Cone & Fan Chart</h4>
-                <p className="text-xs text-slate-400">Historical actuals transition into Bullish (+1σ), Baseline, and Bearish (-1σ) bounds</p>
+                <p className="text-xs text-slate-400">Historical actuals transition into Bullish, Baseline, and Bearish projection bounds</p>
               </div>
             </div>
 

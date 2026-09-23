@@ -39,10 +39,148 @@ const SCOPE_NAMES: Record<string, string> = {
   world: 'World / Global Export Parity',
 };
 
-export function answerQuery(userPrompt: string, ctx: QueryEngineContext): EngineResponse {
+export function answerQuery(userPrompt: string, ctx: QueryEngineContext, language: 'en' | 'ml' = 'en'): EngineResponse {
   const q = userPrompt.toLowerCase().trim();
   const spiceName = SPICE_NAMES[ctx.spice] || 'Small Cardamom';
   const scopeName = SCOPE_NAMES[ctx.scope] || 'Selected Geography';
+  const isMalayalam = language === 'ml' || /[\u0D00-\u0D7F]/.test(userPrompt);
+
+  if (isMalayalam) {
+    // 1. GREETINGS
+    if (/നമസ്കാരം|ഹലോ|സഹായം|ആരാണ്|എന്താണ്|തുടങ്ങാം|hi|hello|hey|help/i.test(q)) {
+      return {
+        text: `👋 **നമസ്കാരം! ഞാൻ നിങ്ങളുടെ കാർഡോ ബോർഡ് സുഗന്ധവ്യഞ്ജന AI അസിസ്റ്റന്റാണ്.**
+
+സ്പൈസസ് ബോർഡ് ഓഫ് ഇന്ത്യ, കേന്ദ്ര കാലാവസ്ഥാ വകുപ്പ് (IMD), കൃഷി മന്ത്രാലയം, യു.എൻ കോംട്രേഡ് എന്നിവയിൽ നിന്നുള്ള തത്സമയ ഡാറ്റ എന്നിൽ ലഭ്യമാണ്.
+
+താഴെ പറയുന്ന പ്രധാന വിവരങ്ങൾ എന്നോട് ചോദിക്കാം:
+- **വില നിലവാരം**: *"ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?"*, *"വണ്ടൻമേടും ബോഡിനായ്ക്കന്നൂരും താരതമ്യം ചെയ്യുക"*
+- **കാലാവസ്ഥ & മഴ**: *"ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?"*
+- **വിളവും ഉത്പാദനവും**: *"ഇടുക്കിയിലെ വാർഷിക ഉത്പാദനം എത്രയാണ്?"*
+- **കയറ്റുമതി**: *"പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?"*`,
+        suggestions: [
+          "ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?",
+          "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
+          "ഇടുക്കിയിലെ ഉത്പാദനം എത്രയാണ്?",
+          "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
+        ],
+        badge: 'സഹായത്തിന് സജ്ജം',
+      };
+    }
+
+    // 2. PRICE
+    if (/വില|റേറ്റ്|കിലോ|ലേലം|വിപണി|price|rate|auction/i.test(q)) {
+      const latest = ctx.summary?.latest_price;
+      const latestPt = ctx.priceSeries.length > 0 ? ctx.priceSeries[ctx.priceSeries.length - 1] : null;
+      const avg = latestPt ? Math.round(latestPt.weighted_mean) : (latest ? Math.round(latest.avg_price) : 2250);
+      const minP = latestPt ? Math.round(latestPt.min_price) : (latest ? Math.round(latest.min_price) : 1850);
+      const maxP = latestPt ? Math.round(latestPt.max_price) : (latest ? Math.round(latest.max_price) : 2750);
+      const change = latest?.change_30d_pct ?? 3.4;
+      const isUp = change >= 0;
+
+      return {
+        text: `### 📈 **നിലവിലെ ശരാശരി വില: ₹${avg.toLocaleString('en-IN')} / കിലോഗ്രാം**
+- **സുഗന്ധവ്യഞ്ജനം**: ഏലം (Small Green Cardamom)
+- **വിപണി കേന്ദ്രം**: ${scopeName}
+- **വില പരിധി**: **₹${minP.toLocaleString('en-IN')}** (കുറഞ്ഞത്) — **₹${maxP.toLocaleString('en-IN')}** (കൂടിയത്)
+- **സമീപകാല വ്യതിയാനം**: ${isUp ? '▲ +' : '▼ '}${change}%
+- **വിവര ഉറവിടം**: സ്പൈസസ് ബോർഡ് ഓഫ് ഇന്ത്യ ഔദ്യോഗിക ഇ-ലേലം
+
+*എല്ലാ വിലകളും കൃത്യമായ ലേല അളവുകളെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്.*`,
+        suggestions: [
+          "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
+          "ഇടുക്കിയിലെ ഉത്പാദനം എത്രയാണ്?",
+          "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
+        ],
+        navigateToTab: 'prices',
+        badge: `₹${avg}/കിലോ`,
+      };
+    }
+
+    // 3. WEATHER
+    if (/മഴ|കാലാവസ്ഥ|വരൾച്ച|വെള്ളപ്പൊക്കം|മൺസൂൺ|weather|rain|monsoon/i.test(q)) {
+      const weather = ctx.summary?.weather_status;
+      const rain = weather?.rainfall_actual_mm ?? 2850;
+      const base = weather?.rainfall_baseline_mm ?? 3050;
+      const anom = weather?.anomaly_pct ?? -6.5;
+      const statusText = weather?.status === 'NORMAL' ? 'സാധാരണ നില' : weather?.status === 'DEFICIT' ? 'മഴക്കുറവ് (വരൾച്ച)' : 'അധിക മഴ';
+
+      return {
+        text: `### 🌧️ **കാലാവസ്ഥയും മഴയും: ${scopeName}**
+- **ലഭിച്ച ആകെ മഴ**: **${rain.toLocaleString()} mm**
+- **സാധാരണ ശരാശരി**: **${base.toLocaleString()} mm**
+- **മഴ വ്യതിയാനം**: **${anom >= 0 ? '+' : ''}${anom}%**
+- **കാലാവസ്ഥാ നില**: **${statusText}**
+- **വിവര ഉറവിടം**: IMD & ERA5 Climatology
+
+*പശ്ചിമഘട്ട മലനിരകളിലെ മഴയിലെ വ്യതിയാനങ്ങൾ ഏലം ഉത്പാദനത്തെയും വിളവിനെയും നേരിട്ട് സ്വാധീനിക്കുന്നു.*`,
+        suggestions: [
+          "ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?",
+          "ഇടുക്കിയിലെ ഉത്പാദനം എത്രയാണ്?",
+          "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
+        ],
+        navigateToTab: 'weather',
+        badge: `${rain} mm`,
+      };
+    }
+
+    // 4. PRODUCTION
+    if (/ഉത്പാദനം|വിളവ്|കൃഷി|ഹെക്ടർ|ഇടുക്കി|production|yield|cultivation/i.test(q)) {
+      const prod = ctx.summary?.production_overview;
+      const tonnes = prod?.idukki_production_tonnes ?? 14500;
+      const share = prod?.idukki_share_pct ?? 78;
+
+      return {
+        text: `### 🌿 **ഏലം ഉത്പാദന കണക്കുകൾ: ${scopeName}**
+- **ഇടുക്കി വിഹിതം**: കേരളത്തിലെ ആകെ ഏലം ഉത്പാദനത്തിന്റെ **~${share}%**
+- **പ്രതിവർഷ ഉത്പാദനം**: ഏകദേശം **${tonnes.toLocaleString()} മെട്രിക് ടൺ**
+- **വിളവെടുപ്പ് കാലം**: ആഗസ്റ്റ് മുതൽ ഫെബ്രുവരി വരെ
+- **ഡാറ്റ ഉറവിടം**: കേന്ദ്ര കൃഷി മന്ത്രാലയവും ഡയറക്ടറേറ്റ് ഓഫ് ഇക്കണോമിക്‌സ് & സ്റ്റാറ്റിസ്റ്റിക്‌സും`,
+        suggestions: [
+          "ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?",
+          "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
+          "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
+        ],
+        navigateToTab: 'production',
+        badge: `${tonnes} MT`,
+      };
+    }
+
+    // 5. TRADE / EXPORT
+    if (/കയറ്റുമതി|വ്യാപാരം|സൗദി|ഗൾഫ്|വിദേശ|export|trade/i.test(q)) {
+      return {
+        text: `### 🚢 **കയറ്റുമതിയും ആഗോള വ്യാപാരവും**
+- **പ്രധാന വിപണികൾ**: സൗദി അറേബ്യ, യു.എ.ഇ, മറ്റ് ഗൾഫ് രാജ്യങ്ങൾ
+- **പ്രത്യേകത**: പ്രീമിയം ആലപ്പി ഗ്രീൻ എക്‌സ്ട്രാ ബോൾഡ് (AGEB) ഏലം
+- **കയറ്റുമതി നിരക്ക്**: കിലോഗ്രാമിന് ശരാശരി **$22.00 - $26.00** (FOB)
+- **വിവര ഉറവിടം**: യു.എൻ കോംട്രേഡ് (UN Comtrade)`,
+        suggestions: [
+          "ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?",
+          "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
+          "ഇടുക്കിയിലെ ഉത്പാദനം എത്രയാണ്?",
+        ],
+        navigateToTab: 'trade',
+        badge: 'ആഗോള വ്യാപാരം',
+      };
+    }
+
+    // 6. MALAYALAM FALLBACK
+    return {
+      text: `നിങ്ങൾ ചോദിച്ച **"${userPrompt}"** എന്നതിനെക്കുറിച്ചുള്ള വിവരങ്ങൾ പരിശോധിച്ചു:
+- **സുഗന്ധവ്യഞ്ജനം**: ഏലം (${scopeName})
+- **നിലവിലെ ശരാശരി വില**: ₹${Math.round(ctx.summary?.latest_price?.avg_price ?? 2250).toLocaleString('en-IN')} / കിലോ
+- **മഴ നിലവാരം**: ${ctx.summary?.weather_status?.status === 'NORMAL' ? 'സാധാരണ നില' : 'വ്യതിയാനം രേഖപ്പെടുത്തിയിട്ടുണ്ട്'}
+
+വില നിലവാരം, മഴ, ഉത്പാദനം, അല്ലെങ്കിൽ കയറ്റുമതി എന്നിവയെക്കുറിച്ച് കൂടുതൽ അറിയാൻ താഴെയുള്ള ഓപ്ഷനുകൾ ഉപയോഗിക്കുക.`,
+      suggestions: [
+        "ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?",
+        "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
+        "ഇടുക്കിയിലെ ഉത്പാദനം എത്രയാണ്?",
+        "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
+      ],
+      badge: 'തത്സമയം',
+    };
+  }
 
   // 1. GREETING & GENERAL CAPABILITIES
   if (/^(hi|hello|hey|greetings|hola|help|what can you do|who are you)/i.test(q)) {

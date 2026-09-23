@@ -17,6 +17,7 @@ import {
   DashboardSummary, PriceSeriesPoint, WeatherPoint, 
   ProductionRecord, TradeRecord, ConsumptionRecord 
 } from './types/index.js';
+import { Language, translations } from './i18n/translations.js';
 import { logVisitorEvent } from './api/visitorTracker.js';
 
 export function App() {
@@ -26,6 +27,19 @@ export function App() {
   const [dateRangePreset, setDateRangePreset] = useState(searchParams.get('range') || 'ALL');
   const [frequency, setFrequency] = useState(searchParams.get('frequency') || 'monthly');
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  
+  const [language, setLanguage] = useState<Language>(() => {
+    const urlLang = searchParams.get('lang') as Language;
+    if (urlLang === 'en' || urlLang === 'ml') return urlLang;
+    const stored = localStorage.getItem('cardo_language') as Language;
+    if (stored === 'en' || stored === 'ml') return stored;
+    return 'en';
+  });
+
+  const handleLanguageChange = (l: Language) => {
+    setLanguage(l);
+    localStorage.setItem('cardo_language', l);
+  };
   
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,8 +61,9 @@ export function App() {
     params.set('range', dateRangePreset);
     params.set('frequency', frequency);
     params.set('tab', activeTab);
+    params.set('lang', language);
     window.history.replaceState(null, '', `?${params.toString()}`);
-  }, [spice, scope, dateRangePreset, frequency, activeTab]);
+  }, [spice, scope, dateRangePreset, frequency, activeTab, language]);
 
   const getDateBounds = useCallback(() => {
     const to = '2026-09-15';
@@ -117,6 +132,8 @@ export function App() {
         setActiveTab={setActiveTab}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        language={language}
+        setLanguage={handleLanguageChange}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
@@ -128,6 +145,7 @@ export function App() {
             dateRangePreset={dateRangePreset}
             scope={scope}
             frequency={frequency}
+            language={language}
             loading={loading}
             onNavigateTab={setActiveTab}
           />
@@ -139,6 +157,7 @@ export function App() {
             spice={spice}
             scope={scope}
             frequency={frequency}
+            language={language}
             loading={loading}
           />
         )}
@@ -148,6 +167,7 @@ export function App() {
             weatherData={weatherData}
             scope={scope}
             frequency={frequency}
+            language={language}
             loading={loading}
           />
         )}
@@ -156,6 +176,7 @@ export function App() {
           <ProductionTab
             productionData={productionData}
             scope={scope}
+            language={language}
             loading={loading}
           />
         )}
@@ -165,6 +186,7 @@ export function App() {
             tradeData={tradeData}
             consumptionData={consumptionData}
             scope={scope}
+            language={language}
             loading={loading}
           />
         )}
@@ -181,7 +203,7 @@ export function App() {
       </main>
 
       <footer className="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
-        <p>Cardo Board — Global Spice Intelligence & Parameterized Extrapolations • Western Ghats & Global Telemetry</p>
+        <p>{translations[language].footer}</p>
       </footer>
 
       <ExportModal
@@ -189,9 +211,11 @@ export function App() {
         onClose={() => setIsExportOpen(false)}
         priceSeries={priceSeries}
         spice={spice}
+        language={language}
       />
 
       <SpiceChatbot
+        language={language}
         context={{
           spice,
           scope,

@@ -5,30 +5,27 @@ import {
 } from 'recharts';
 import { ProductionRecord } from '../../types/index.js';
 import { Sprout, MapPin, Award, Layers } from 'lucide-react';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface ProductionTabProps {
   productionData: ProductionRecord[];
   scope?: string;
+  language?: Language;
   loading: boolean;
 }
 
 export const ProductionTab: React.FC<ProductionTabProps> = ({
   productionData,
   scope = 'all',
+  language = 'en',
   loading
 }) => {
   const [selectedMetric, setSelectedMetric] = useState<'production' | 'area' | 'yield'>('production');
+  const t = translations[language] || translations.en;
 
   const scopeLabel = useMemo(() => {
-    switch (scope) {
-      case 'idukki': return 'Idukki District';
-      case 'bodinayakanur': return 'Tamil Nadu / Bodinayakanur';
-      case 'kerala': return 'Kerala Statewide';
-      case 'india': return 'All India';
-      case 'world': return 'Global / FAOSTAT';
-      default: return 'All Geographies';
-    }
-  }, [scope]);
+    return t.scopes[scope as keyof typeof t.scopes] || scope;
+  }, [scope, t]);
 
   if (loading) {
     return (
@@ -63,9 +60,9 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-slate-900 border border-slate-800">
         <div>
           <h3 className="text-sm font-semibold text-white">
-            Agricultural Production & Cultivation Dynamics ({scopeLabel})
+            {t.production.title} ({scopeLabel})
           </h3>
-          <p className="text-xs text-slate-400">Official government statistics (DES India & FAOSTAT) spanning 2016–2026</p>
+          <p className="text-xs text-slate-400">{t.production.subtitle}</p>
         </div>
         <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
           <button
@@ -74,7 +71,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               selectedMetric === 'production' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Production (Tonnes)
+            {t.production.metricProduction}
           </button>
           <button
             onClick={() => setSelectedMetric('area')}
@@ -82,7 +79,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               selectedMetric === 'area' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Harvested Area (ha)
+            {t.production.metricArea}
           </button>
           <button
             onClick={() => setSelectedMetric('yield')}
@@ -90,7 +87,7 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
               selectedMetric === 'yield' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Yield (kg/ha)
+            {t.production.metricYield}
           </button>
         </div>
       </div>
@@ -122,8 +119,8 @@ export const ProductionTab: React.FC<ProductionTabProps> = ({
       {/* Production Hierarchy Table */}
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-white">Geographic Production Hierarchy & Provenance</h3>
-          <p className="text-xs text-slate-400">All figures are source-backed by Directorate of Economics & Statistics and FAOSTAT</p>
+          <h3 className="text-sm font-semibold text-white">{t.production.hierarchyTitle}</h3>
+          <p className="text-xs text-slate-400">{t.production.hierarchySubtitle}</p>
         </div>
 
         <div className="overflow-x-auto">

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Brush } from 'recharts';
 import { DashboardSummary, PriceSeriesPoint, WeatherPoint } from '../../types/index.js';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface OverviewTabProps {
   summary: DashboardSummary | null;
@@ -13,6 +14,7 @@ interface OverviewTabProps {
   dateRangePreset?: string;
   scope?: string;
   frequency?: string;
+  language?: Language;
   loading: boolean;
   onNavigateTab: (tab: string) => void;
 }
@@ -24,9 +26,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   dateRangePreset = 'ALL',
   scope = 'all',
   frequency = 'monthly',
+  language = 'en',
   loading,
   onNavigateTab
 }) => {
+  const t = translations[language] || translations.en;
+
   const chartMinWidth = useMemo(() => {
     if (!priceSeries || priceSeries.length === 0) return 1000;
     const perPoint = frequency === 'daily' ? 14 : (frequency === 'annual' ? 60 : 18);
@@ -34,33 +39,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   }, [priceSeries, frequency]);
 
   const rangeBadge = useMemo(() => {
-    switch (dateRangePreset) {
-      case '1Y': return 'Past 1 Year';
-      case '3Y': return 'Past 3 Years';
-      case '5Y': return 'Past 5 Years';
-      case 'ALL': return 'Max 10 Years';
-      default: return 'Selected Period';
-    }
-  }, [dateRangePreset]);
+    return t.ranges[dateRangePreset as keyof typeof t.ranges] || dateRangePreset;
+  }, [dateRangePreset, t]);
 
   const scopeLabel = useMemo(() => {
-    switch (scope) {
-      case 'idukki': return 'Idukki (Vandanmettu)';
-      case 'bodinayakanur': return 'Bodinayakanur (TN)';
-      case 'kerala': return 'Kerala Composite';
-      case 'india': return 'India (National)';
-      case 'world': return 'World / Global';
-      default: return 'All Markets';
-    }
-  }, [scope]);
+    return t.scopes[scope as keyof typeof t.scopes] || scope;
+  }, [scope, t]);
 
   const freqLabel = useMemo(() => {
-    switch (frequency) {
-      case 'daily': return 'Daily';
-      case 'annual': return 'Annual';
-      default: return 'Monthly';
-    }
-  }, [frequency]);
+    return t.frequencies[frequency as keyof typeof t.frequencies] || frequency;
+  }, [frequency, t]);
 
   // Recalculate metrics dynamically based on the active timeframe
   const periodPriceStats = useMemo(() => {
@@ -157,22 +145,18 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-slate-300">
           <span className="font-semibold text-white flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-emerald-400" /> Active Filters:
+            <Calendar className="w-3.5 h-3.5 text-emerald-400" /> {t.overview.activeFilters}
           </span>
           <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/60 font-medium">
-            Place: {scopeLabel}
+            {t.overview.place}: {scopeLabel}
           </span>
           <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/60 font-medium">
-            Freq: {freqLabel}
+            {t.overview.freq}: {freqLabel}
           </span>
           <span className="px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800/60 font-medium">
-            Range: {rangeBadge}
+            {t.overview.range}: {rangeBadge}
           </span>
-          <span className="hidden sm:inline text-slate-400 font-mono text-[11px]">({priceSeries.length} points aggregated)</span>
         </div>
-        <span className="text-[11px] text-slate-400">
-          All metrics update dynamically
-        </span>
       </div>
 
       {/* KPI Cards Grid - Responsive: 2 cols on mobile, 4 on desktop */}
@@ -181,7 +165,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className="p-3.5 sm:p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start">
-              <span className="text-[11px] sm:text-xs font-medium text-slate-400">Benchmark Mean</span>
+              <span className="text-[11px] sm:text-xs font-medium text-slate-400">{t.overview.avgPrice}</span>
               <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
                 <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
@@ -190,16 +174,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="text-lg sm:text-2xl font-bold text-white tracking-tight">
                 ₹{periodPriceStats.avgPrice.toLocaleString('en-IN') || '—'}
               </span>
-              <span className="text-[10px] sm:text-xs text-slate-400">/ kg</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">{t.overview.perKg}</span>
             </div>
           </div>
           <div className="mt-2.5 pt-2 border-t border-slate-800/60 text-[10px] sm:text-xs space-y-1">
             <div className={`flex items-center gap-1 font-semibold ${isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
               {isUp ? <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-              <span>{isUp ? '+' : ''}{periodPriceStats.changePct}% in {rangeBadge}</span>
+              <span>{isUp ? '+' : ''}{periodPriceStats.changePct}% ({rangeBadge})</span>
             </div>
-            <div className="text-slate-500 truncate">
-              Spread: ₹{periodPriceStats.minPrice} - ₹{periodPriceStats.maxPrice}
+            <div className="text-slate-400 truncate">
+              {t.overview.priceSpread}: ₹{periodPriceStats.minPrice} - ₹{periodPriceStats.maxPrice}
             </div>
           </div>
         </div>
@@ -208,7 +192,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className="p-3.5 sm:p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start">
-              <span className="text-[11px] sm:text-xs font-medium text-slate-400">Volume Turnover</span>
+              <span className="text-[11px] sm:text-xs font-medium text-slate-400">{t.overview.volumeTurnover}</span>
               <div className="p-1.5 sm:p-2 rounded-lg bg-blue-950/60 text-blue-400 border border-blue-800/40">
                 <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
@@ -217,24 +201,24 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="text-lg sm:text-2xl font-bold text-white tracking-tight">
                 {periodPriceStats.totalArrivedTonnes ? periodPriceStats.totalArrivedTonnes.toLocaleString() : '—'}
               </span>
-              <span className="text-[10px] sm:text-xs text-slate-400">Tonnes</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">{t.overview.tonnes}</span>
             </div>
           </div>
           <div className="mt-2.5 pt-2 border-t border-slate-800/60 text-[10px] sm:text-xs space-y-1">
             <div className="text-slate-300">
-              Sold: <span className="font-semibold text-white">{periodPriceStats.totalSoldTonnes.toLocaleString()} MT</span>
+              {t.overview.soldVolume}: <span className="font-semibold text-white">{periodPriceStats.totalSoldTonnes.toLocaleString()} MT</span>
             </div>
             <div className="text-emerald-400 font-medium">
-              {periodPriceStats.clearancePct}% Clearance Rate
+              {periodPriceStats.clearancePct}% {t.overview.clearanceRate}
             </div>
           </div>
         </div>
 
-        {/* Card 3: Idukki Weather & Rainfall Regime */}
+        {/* Card 3: Weather & Rainfall */}
         <div className="p-3.5 sm:p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start">
-              <span className="text-[11px] sm:text-xs font-medium text-slate-400">Rainfall Regime</span>
+              <span className="text-[11px] sm:text-xs font-medium text-slate-400">{t.overview.rainfallStatus}</span>
               <div className="p-1.5 sm:p-2 rounded-lg bg-cyan-950/60 text-cyan-400 border border-cyan-800/40">
                 <CloudRain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
@@ -243,7 +227,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="text-lg sm:text-2xl font-bold text-white tracking-tight">
                 {periodWeatherStats?.rainfall_actual_mm ? periodWeatherStats.rainfall_actual_mm.toLocaleString() : '—'}
               </span>
-              <span className="text-[10px] sm:text-xs text-slate-400">mm total</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">{t.overview.rainfallMmTotal}</span>
             </div>
           </div>
           <div className="mt-2.5 pt-2 border-t border-slate-800/60 text-[10px] sm:text-xs flex items-center justify-between">
@@ -257,7 +241,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               {periodWeatherStats?.status || 'NORMAL'}
             </span>
             <span className="text-slate-400">
-              {periodWeatherStats && periodWeatherStats.anomaly_pct >= 0 ? '+' : ''}{periodWeatherStats?.anomaly_pct}% vs Norm
+              {periodWeatherStats && periodWeatherStats.anomaly_pct >= 0 ? '+' : ''}{periodWeatherStats?.anomaly_pct}% {t.overview.vsNormal}
             </span>
           </div>
         </div>
@@ -266,7 +250,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div className="p-3.5 sm:p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start">
-              <span className="text-[11px] sm:text-xs font-medium text-slate-400">Regional Share</span>
+              <span className="text-[11px] sm:text-xs font-medium text-slate-400">{t.overview.regionalShare}</span>
               <div className="p-1.5 sm:p-2 rounded-lg bg-amber-950/60 text-amber-400 border border-amber-800/40">
                 <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
@@ -275,12 +259,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               <span className="text-lg sm:text-2xl font-bold text-white tracking-tight">
                 {prod?.idukki_share_pct || '78'}%
               </span>
-              <span className="text-[10px] sm:text-xs text-slate-400">of Kerala</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">{t.overview.ofKerala}</span>
             </div>
           </div>
           <div className="mt-2.5 pt-2 border-t border-slate-800/60 text-[10px] sm:text-xs flex items-center justify-between text-slate-400">
             <span>{prod?.idukki_production_tonnes ? prod.idukki_production_tonnes.toLocaleString() : '14,500'} MT</span>
-            <span className="text-slate-300 font-medium">Harvest '26</span>
+            <span className="text-slate-300 font-medium">{t.overview.harvestEstimate} '26</span>
           </div>
         </div>
       </div>
@@ -289,9 +273,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className="p-4 sm:p-5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
-            <h3 className="text-sm font-semibold text-white">Price Trajectory & Volume Dynamics</h3>
+            <h3 className="text-sm font-semibold text-white">{t.overview.priceTrajectoryTitle}</h3>
             <p className="text-xs text-slate-400">
-              Historical price envelope & market arrivals ({scopeLabel} • {freqLabel} • {rangeBadge})
+              {t.overview.priceTrajectorySubtitle} ({scopeLabel} • {freqLabel} • {rangeBadge})
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -303,7 +287,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               onClick={() => onNavigateTab('prices')}
               className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium ml-1"
             >
-              <span>Full Analytics</span>
+              <span>{t.tabs.prices}</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -312,7 +296,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         {/* Mobile Swipe Cue */}
         <div className="flex sm:hidden items-center justify-center gap-1.5 py-1 px-2 mb-2 rounded bg-slate-800/60 text-slate-400 text-[11px]">
           <MoveHorizontal className="w-3 h-3 text-emerald-400" />
-          <span>Swipe horizontally to navigate full timeline</span>
+          <span>{t.overview.swipePrompt}</span>
         </div>
 
         {/* Scrollable Chart Container */}
@@ -354,12 +338,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className="p-4 sm:p-5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div>
-            <h3 className="text-sm font-semibold text-white">Recent Verified Auctions (Spices Board of India)</h3>
-            <p className="text-xs text-slate-400">Live authoritative e-auction telemetry from Supabase Cloud</p>
+            <h3 className="text-sm font-semibold text-white">{t.overview.recentAuctionsTitle}</h3>
+            <p className="text-xs text-slate-400">{t.overview.recentAuctionsSubtitle}</p>
           </div>
           <span className="px-2.5 py-1 rounded text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>100% Observed Data</span>
+            <span>{t.overview.verifiedData}</span>
           </span>
         </div>
 
@@ -367,15 +351,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <table className="w-full text-left text-xs whitespace-nowrap">
             <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
               <tr>
-                <th className="py-2.5 px-3 font-medium">Date</th>
-                <th className="py-2.5 px-3 font-medium">Auctioneer</th>
-                <th className="py-2.5 px-3 font-medium">Market Hub</th>
-                <th className="py-2.5 px-3 font-medium text-right">Arrivals (kg)</th>
-                <th className="py-2.5 px-3 font-medium text-right">Sold (kg)</th>
-                <th className="py-2.5 px-3 font-medium text-right">Min (₹)</th>
-                <th className="py-2.5 px-3 font-medium text-right">Max (₹)</th>
-                <th className="py-2.5 px-3 font-medium text-right">Avg Price (₹)</th>
-                <th className="py-2.5 px-3 font-medium text-center">Status</th>
+                <th className="py-2.5 px-3 font-medium">{t.table.date}</th>
+                <th className="py-2.5 px-3 font-medium">{t.table.auctioneer}</th>
+                <th className="py-2.5 px-3 font-medium">{t.table.marketHub}</th>
+                <th className="py-2.5 px-3 font-medium text-right">{t.table.arrivalsKg}</th>
+                <th className="py-2.5 px-3 font-medium text-right">{t.table.soldKg}</th>
+                <th className="py-2.5 px-3 font-medium text-right">{t.table.minPrice}</th>
+                <th className="py-2.5 px-3 font-medium text-right">{t.table.maxPrice}</th>
+                <th className="py-2.5 px-3 font-medium text-right">{t.table.avgPrice}</th>
+                <th className="py-2.5 px-3 font-medium text-center">{t.table.status}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">

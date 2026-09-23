@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import { X, Download, FileSpreadsheet, FileJson, Check } from 'lucide-react';
 import { PriceSeriesPoint } from '../../types/index.js';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   priceSeries: PriceSeriesPoint[];
   spice: string;
+  language?: Language;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
   isOpen,
   onClose,
   priceSeries,
-  spice
+  spice,
+  language = 'en'
 }) => {
+  const isMl = language === 'ml';
   const [downloaded, setDownloaded] = useState(false);
 
   if (!isOpen) return null;
@@ -66,7 +70,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="p-5 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2 text-white font-bold text-sm">
             <Download className="w-4 h-4 text-emerald-400" />
-            <span>Export Analytics Data</span>
+            <span>{isMl ? 'ഡാറ്റ ഡൗൺലോഡ് ചെയ്യുക' : 'Export Analytics Data'}</span>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
             <X className="w-4 h-4" />
@@ -75,7 +79,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         <div className="p-5 space-y-4 text-xs">
           <p className="text-slate-300">
-            Download the active filtered series for <span className="font-semibold text-emerald-400">{spice}</span> ({priceSeries.length} points).
+            {isMl ? (
+              <>തിരഞ്ഞെടുത്ത <span className="font-semibold text-emerald-400">{spice}</span> വിവരങ്ങൾ ഡൗൺലോഡ് ചെയ്യുക ({priceSeries.length} ഡാറ്റാ പോയിന്റുകൾ).</>
+            ) : (
+              <>Download the active filtered series for <span className="font-semibold text-emerald-400">{spice}</span> ({priceSeries.length} points).</>
+            )}
           </p>
 
           <div className="grid grid-cols-2 gap-3 pt-2">
@@ -84,8 +92,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               className="p-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 flex flex-col items-center gap-2 text-slate-200 transition-colors"
             >
               <FileSpreadsheet className="w-6 h-6 text-emerald-400" />
-              <span className="font-semibold">CSV Format</span>
-              <span className="text-[10px] text-slate-400">Spreadsheets / Excel</span>
+              <span className="font-semibold">{isMl ? 'CSV ഫോർമാറ്റ്' : 'CSV Format'}</span>
+              <span className="text-[10px] text-slate-400">{isMl ? 'എക്സൽ / സ്പ്രെഡ്ഷീറ്റ്' : 'Spreadsheets / Excel'}</span>
             </button>
 
             <button
@@ -93,15 +101,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               className="p-4 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 flex flex-col items-center gap-2 text-slate-200 transition-colors"
             >
               <FileJson className="w-6 h-6 text-cyan-400" />
-              <span className="font-semibold">JSON Format</span>
-              <span className="text-[10px] text-slate-400">Raw Objects / API</span>
+              <span className="font-semibold">{isMl ? 'JSON ഫോർമാറ്റ്' : 'JSON Format'}</span>
+              <span className="text-[10px] text-slate-400">{isMl ? 'റോ ഒബ്ജക്റ്റുകൾ / API' : 'Raw Objects / API'}</span>
             </button>
           </div>
 
           {downloaded && (
             <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-800 text-emerald-300 flex items-center justify-center gap-2 text-xs">
               <Check className="w-4 h-4" />
-              <span>Download started successfully!</span>
+              <span>{isMl ? 'ഡൗൺലോഡ് വിജയകരമായി ആരംഭിച്ചു!' : 'Download started successfully!'}</span>
             </div>
           )}
         </div>

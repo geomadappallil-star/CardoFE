@@ -5,11 +5,13 @@ import {
 } from 'recharts';
 import { TradeRecord, ConsumptionRecord } from '../../types/index.js';
 import { Globe, ArrowUpRight, Coffee, ShieldCheck } from 'lucide-react';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface TradeTabProps {
   tradeData: TradeRecord[];
   consumptionData: ConsumptionRecord[];
   scope?: string;
+  language?: Language;
   loading: boolean;
 }
 
@@ -17,8 +19,11 @@ export const TradeTab: React.FC<TradeTabProps> = ({
   tradeData,
   consumptionData,
   scope = 'all',
+  language = 'en',
   loading
 }) => {
+  const t = translations[language] || translations.en;
+
   if (loading) {
     return (
       <div className="py-24 flex justify-center text-slate-400">
@@ -34,7 +39,7 @@ export const TradeTab: React.FC<TradeTabProps> = ({
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
             <Globe className="w-4 h-4" />
-            <span>Primary Export Corridors</span>
+            <span>{t.trade.exportCorridors}</span>
           </div>
           <p className="mt-2 text-lg font-bold text-white">India → Saudi Arabia & UAE</p>
           <span className="text-xs text-slate-400">Premium Alleppey Green Extra Bold (AGEB) Cardamom</span>
@@ -43,7 +48,7 @@ export const TradeTab: React.FC<TradeTabProps> = ({
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
             <Coffee className="w-4 h-4" />
-            <span>High Per Capita Consumption</span>
+            <span>{t.trade.perCapita}</span>
           </div>
           <p className="mt-2 text-lg font-bold text-white">Saudi Arabia (~0.38 kg/capita)</p>
           <span className="text-xs text-slate-400">Gahwa traditional cardamom coffee cultural staple</span>
@@ -52,7 +57,7 @@ export const TradeTab: React.FC<TradeTabProps> = ({
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-2 text-xs font-semibold text-cyan-400">
             <ArrowUpRight className="w-4 h-4" />
-            <span>Export Unit Value</span>
+            <span>{t.trade.unitValue}</span>
           </div>
           <p className="mt-2 text-lg font-bold text-white">$22.00 - $26.00 / kg</p>
           <span className="text-xs text-slate-400">UN Comtrade FOB Export Value Realization</span>
@@ -62,8 +67,8 @@ export const TradeTab: React.FC<TradeTabProps> = ({
       {/* Trade Flows Chart */}
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-white">Annual Export Volumes by Country Pair (UN Comtrade)</h3>
-          <p className="text-xs text-slate-400">Direct trade flows between major exporting and importing destinations</p>
+          <h3 className="text-sm font-semibold text-white">{t.trade.annualFlowsTitle}</h3>
+          <p className="text-xs text-slate-400">{t.trade.annualFlowsSubtitle}</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -99,8 +104,8 @@ export const TradeTab: React.FC<TradeTabProps> = ({
       {/* FAOSTAT Food Supply / Consumption */}
       <div className="p-5 rounded-xl bg-slate-900 border border-slate-800">
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-white">Apparent Food Supply & Per Capita Consumption (FAOSTAT)</h3>
-          <p className="text-xs text-slate-400">Strictly reported without turning missing values into zero</p>
+          <h3 className="text-sm font-semibold text-white">{t.trade.consumptionTitle}</h3>
+          <p className="text-xs text-slate-400">{t.trade.consumptionSubtitle}</p>
         </div>
 
         <div className="overflow-x-auto">

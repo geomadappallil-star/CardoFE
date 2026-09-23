@@ -4,13 +4,15 @@ import {
   Tooltip, CartesianGrid, Legend, Brush 
 } from 'recharts';
 import { PriceSeriesPoint } from '../../types/index.js';
-import { TrendingUp, Scale, ArrowDown, ArrowUp, BarChart3, MoveHorizontal } from 'lucide-react';
+import { TrendingUp, Scale, ArrowDown, ArrowUp, MoveHorizontal } from 'lucide-react';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface PricesTabProps {
   priceSeries: PriceSeriesPoint[];
   spice: string;
   scope?: string;
   frequency: string;
+  language?: Language;
   loading: boolean;
 }
 
@@ -19,18 +21,14 @@ export const PricesTab: React.FC<PricesTabProps> = ({
   spice,
   scope = 'all',
   frequency,
+  language = 'en',
   loading
 }) => {
+  const t = translations[language] || translations.en;
+
   const scopeLabel = useMemo(() => {
-    switch (scope) {
-      case 'idukki': return 'Idukki (Vandanmettu)';
-      case 'bodinayakanur': return 'Bodinayakanur (TN)';
-      case 'kerala': return 'Kerala Composite';
-      case 'india': return 'India (National)';
-      case 'world': return 'World / Global Export';
-      default: return 'All Domestic Markets';
-    }
-  }, [scope]);
+    return t.scopes[scope as keyof typeof t.scopes] || scope;
+  }, [scope, t]);
 
   const stats = useMemo(() => {
     if (!priceSeries || priceSeries.length === 0) return null;
@@ -76,39 +74,39 @@ export const PricesTab: React.FC<PricesTabProps> = ({
       {/* Price Statistics Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-          <span className="text-xs text-slate-400">Period Peak ({scopeLabel})</span>
+          <span className="text-xs text-slate-400">{t.prices.periodPeak} ({scopeLabel})</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold text-emerald-400">₹{stats?.high.toLocaleString()}</span>
             <span className="text-xs text-slate-500">/ kg</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-1 block">Maximum auction price realization</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">{t.prices.periodPeakSub}</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-          <span className="text-xs text-slate-400">Period Floor ({scopeLabel})</span>
+          <span className="text-xs text-slate-400">{t.prices.periodFloor} ({scopeLabel})</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold text-amber-400">₹{stats?.low.toLocaleString()}</span>
             <span className="text-xs text-slate-500">/ kg</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-1 block">Low band floor during harvest peaks</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">{t.prices.periodFloorSub}</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-          <span className="text-xs text-slate-400">Weighted Average ({frequency.toUpperCase()})</span>
+          <span className="text-xs text-slate-400">{t.prices.avgPriceTitle} ({t.frequencies[frequency as keyof typeof t.frequencies] || frequency})</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold text-white">₹{stats?.avg.toLocaleString()}</span>
             <span className="text-xs text-slate-500">/ kg</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-1 block">Σ(Price × Qty) / Σ(Qty) dynamic metric</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">{t.prices.avgPriceSub}</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-          <span className="text-xs text-slate-400">Total Cleared Volume</span>
+          <span className="text-xs text-slate-400">{t.prices.totalCleared}</span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-xl font-bold text-cyan-400">{stats?.totalVolumeTonnes.toLocaleString()}</span>
             <span className="text-xs text-slate-500">MT</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-1 block">Cumulative auction clearance</span>
+          <span className="text-[11px] text-slate-500 mt-1 block">{t.prices.totalClearedSub}</span>
         </div>
       </div>
 
@@ -117,17 +115,17 @@ export const PricesTab: React.FC<PricesTabProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">
-              Price Dynamics Envelope & Volumes ({scopeLabel} • {frequency.toUpperCase()})
+              {t.prices.chartTitle} ({scopeLabel} • {t.frequencies[frequency as keyof typeof t.frequencies] || frequency})
             </h3>
             <p className="text-xs text-slate-400">
-              Scroll horizontally (left ↔ right) or drag the timeline slider below to inspect dynamically aggregated points
+              {t.prices.chartSubtitle}
             </p>
           </div>
           
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 text-xs font-medium">
               <MoveHorizontal className="w-3.5 h-3.5 animate-pulse" />
-              <span>Scrollable: {priceSeries.length} points</span>
+              <span>{priceSeries.length} points</span>
             </span>
           </div>
         </div>
@@ -174,22 +172,6 @@ export const PricesTab: React.FC<PricesTabProps> = ({
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      </div>
-
-      {/* Analytical Trust Note */}
-      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 flex items-start gap-3">
-        <div className="p-2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 shrink-0">
-          <BarChart3 className="w-4 h-4" />
-        </div>
-        <div>
-          <h4 className="font-semibold text-slate-200">Analytical Trust Principle: Weighted vs Unweighted Aggregations</h4>
-          <p className="mt-1 text-slate-400 leading-relaxed">
-            In accordance with the project development charter, raw daily auctions from the four certified auctioneers 
-            (MAS Enterprises, SIGC, CPMC, SPCL) are preserved without distortion. The quantity-weighted mean:
-            <code className="mx-1 px-1 py-0.5 rounded bg-slate-800 text-emerald-300">Σ(Price × Sold_Quantity) / Σ(Sold_Quantity)</code>
-            accurately factors market liquidity rather than giving equal weight to thin or illiquid auction lots.
-          </p>
         </div>
       </div>
     </div>

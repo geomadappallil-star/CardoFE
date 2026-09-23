@@ -1,5 +1,6 @@
 import React from 'react';
-import { Download, RefreshCw, Layers, MapPin, Calendar, Sparkles } from 'lucide-react';
+import { Download, RefreshCw, Layers, MapPin, Calendar, Sparkles, Languages } from 'lucide-react';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface NavbarProps {
   spice: string;
@@ -15,6 +16,8 @@ interface NavbarProps {
   setActiveTab: (t: string) => void;
   refreshing: boolean;
   onRefresh: () => void;
+  language: Language;
+  setLanguage: (l: Language) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -30,45 +33,49 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   refreshing,
-  onRefresh
+  onRefresh,
+  language,
+  setLanguage
 }) => {
+  const t = translations[language];
+
   const spices = [
-    { code: 'small_cardamom', name: 'Small Cardamom' },
-    { code: 'black_pepper', name: 'Black Pepper' },
-    { code: 'nutmeg', name: 'Nutmeg' },
-    { code: 'cloves', name: 'Cloves' },
+    { code: 'small_cardamom', name: t.spices.small_cardamom },
+    { code: 'black_pepper', name: t.spices.black_pepper },
+    { code: 'nutmeg', name: t.spices.nutmeg },
+    { code: 'cloves', name: t.spices.cloves },
   ];
 
   const scopes = [
-    { code: 'all', label: 'All' },
-    { code: 'idukki', label: 'Idukki' },
-    { code: 'bodinayakanur', label: 'Bodinayakanur' },
-    { code: 'kerala', label: 'Kerala' },
-    { code: 'india', label: 'India' },
-    { code: 'world', label: 'World' },
+    { code: 'all', label: t.scopes.all },
+    { code: 'idukki', label: t.scopes.idukki },
+    { code: 'bodinayakanur', label: t.scopes.bodinayakanur },
+    { code: 'kerala', label: t.scopes.kerala },
+    { code: 'india', label: t.scopes.india },
+    { code: 'world', label: t.scopes.world },
   ];
 
   const presets = [
-    { code: '1Y', label: '1Y' },
-    { code: '3Y', label: '3Y' },
-    { code: '5Y', label: '5Y' },
-    { code: 'ALL', label: 'Max (10Y)' },
+    { code: '1Y', label: t.ranges['1Y'] },
+    { code: '3Y', label: t.ranges['3Y'] },
+    { code: '5Y', label: t.ranges['5Y'] },
+    { code: 'ALL', label: t.ranges['ALL'] },
   ];
 
   const frequencies = [
-    { code: 'daily', label: 'Daily' },
-    { code: 'monthly', label: 'Monthly' },
-    { code: 'annual', label: 'Annual' },
+    { code: 'daily', label: t.frequencies.daily },
+    { code: 'monthly', label: t.frequencies.monthly },
+    { code: 'annual', label: t.frequencies.annual },
   ];
 
   const tabs = [
-    { id: 'overview', label: 'Executive Overview' },
-    { id: 'prices', label: 'Price Dynamics' },
-    { id: 'weather', label: 'Monsoon & Climate' },
-    { id: 'production', label: 'Cultivation & Yield' },
-    { id: 'trade', label: 'Trade Flows' },
-    { id: 'extrapolations', label: 'Scenario Models', highlight: true },
-    { id: 'provenance', label: 'Data Provenance' },
+    { id: 'overview', label: t.tabs.overview },
+    { id: 'prices', label: t.tabs.prices },
+    { id: 'weather', label: t.tabs.weather },
+    { id: 'production', label: t.tabs.production },
+    { id: 'trade', label: t.tabs.trade },
+    { id: 'extrapolations', label: t.tabs.extrapolations, highlight: true },
+    { id: 'provenance', label: t.tabs.provenance },
   ];
 
   return (
@@ -82,23 +89,49 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-bold text-base sm:text-lg tracking-tight text-white">Cardo Board</span>
+                <span className="font-bold text-base sm:text-lg tracking-tight text-white">{t.appName}</span>
                 <span className="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-                  v1.3 Live
+                  v1.3
                 </span>
               </div>
-              <p className="hidden sm:block text-xs text-slate-400">Global Spice Intelligence & Scenario Extrapolations • Western Ghats & Global</p>
+              <p className="hidden sm:block text-xs text-slate-400">{t.appSubtitle}</p>
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions & Language Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Seamless Language Toggle */}
+            <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-medium">
+              <button
+                onClick={() => setLanguage('en')}
+                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                  language === 'en'
+                    ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="English"
+              >
+                <span>EN</span>
+              </button>
+              <button
+                onClick={() => setLanguage('ml')}
+                className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
+                  language === 'ml'
+                    ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="മലയാളം (Malayalam)"
+              >
+                <span>മലയാളം</span>
+              </button>
+            </div>
+
             <button
               onClick={onRefresh}
               className={`p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors ${
                 refreshing ? 'animate-spin text-emerald-400' : ''
               }`}
-              title="Refresh Data"
+              title={t.refresh}
             >
               <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
@@ -107,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Export</span>
+              <span>{t.export}</span>
             </button>
           </div>
         </div>
@@ -117,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Spice Selector */}
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
-              <Layers className="w-3.5 h-3.5 text-emerald-400" /> Spice:
+              <Layers className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'ഇനം:' : 'Spice:'}
             </span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
               {spices.map(s => (
@@ -139,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Geography Scope */}
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
-              <MapPin className="w-3.5 h-3.5 text-emerald-400" /> Scope:
+              <MapPin className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'മേഖല:' : 'Scope:'}
             </span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
               {scopes.map(sc => (
@@ -161,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Date Presets (Timeframe) */}
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
-              <Calendar className="w-3.5 h-3.5 text-emerald-400" /> Range:
+              <Calendar className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'കാലയളവ്:' : 'Range:'}
             </span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
               {presets.map(p => (
@@ -182,7 +215,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Frequency */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-slate-400 font-medium text-[11px] sm:text-xs">Freq:</span>
+            <span className="text-slate-400 font-medium text-[11px] sm:text-xs">{language === 'ml' ? 'തരം:' : 'Freq:'}</span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
               {frequencies.map(f => (
                 <button

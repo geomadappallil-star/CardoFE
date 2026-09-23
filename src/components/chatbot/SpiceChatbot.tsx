@@ -4,13 +4,15 @@ import {
   RotateCcw, ArrowUpRight, Zap, HelpCircle 
 } from 'lucide-react';
 import { answerQuery, QueryEngineContext, BotMessage } from './smartQueryEngine.js';
+import { Language, translations } from '../../i18n/translations.js';
 
 interface SpiceChatbotProps {
   context: QueryEngineContext;
+  language?: Language;
   onNavigateTab: (tab: string) => void;
 }
 
-const INITIAL_SUGGESTIONS = [
+const INITIAL_SUGGESTIONS_EN = [
   "What is the current cardamom price?",
   "Compare Vandanmettu vs Bodinayakanur",
   "Why did prices spike in 2019?",
@@ -19,20 +21,44 @@ const INITIAL_SUGGESTIONS = [
   "Where does India export cardamom to?"
 ];
 
-export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateTab }) => {
+const INITIAL_SUGGESTIONS_ML = [
+  "ഇപ്പോഴത്തെ ഏലം വില എത്രയാണ്?",
+  "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
+  "ഇടുക്കിയിലെ ഉത്പാദനം എത്രയാണ്?",
+  "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
+  "വണ്ടൻമേടും ബോഡിനായ്ക്കന്നൂരും തമ്മിലുള്ള വ്യത്യാസം?"
+];
+
+export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, language = 'en', onNavigateTab }) => {
+  const t = translations[language] || translations.en;
+  const initialSuggestions = language === 'ml' ? INITIAL_SUGGESTIONS_ML : INITIAL_SUGGESTIONS_EN;
+
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [messages, setMessages] = useState<BotMessage[]>([
-    {
-      id: 'welcome',
-      sender: 'bot',
-      text: `👋 **Welcome to Cardo Board Spice Intelligence AI!**\n\nI am your live analytical assistant powered by **Engine A (Client-Side Smart NLP)**. I have real-time access to our verified Spices Board auctions, Western Ghats climate models, and UN Comtrade telemetry.\n\nHow can I help you today?`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      suggestions: INITIAL_SUGGESTIONS.slice(0, 3),
-      badge: 'Engine A (100% Free)',
-    }
-  ]);
+
+  const getInitialBotMsg = (): BotMessage => ({
+    id: 'welcome',
+    sender: 'bot',
+    text: language === 'ml' 
+      ? `👋 **കാർഡോ ബോർഡ് സുഗന്ധവ്യഞ്ജന AI അസിസ്റ്റന്റിലേക്ക് സ്വാഗതം!**\n\nസ്പൈസസ് ബോർഡ് ലേലങ്ങൾ, പശ്ചിമഘട്ട കാലാവസ്ഥ, ഉത്പാദനം, കയറ്റുമതി എന്നിവയെക്കുറിച്ചുള്ള തത്സമയ വിവരങ്ങൾ എന്നിൽ ലഭ്യമാണ്.\n\nതാഴെ പറയുന്ന ചോദ്യങ്ങൾ ചോദിക്കുകയോ നിങ്ങൾക്ക് ആവശ്യമുള്ളത് ടൈപ്പ് ചെയ്യുകയോ ചെയ്യാം:`
+      : `👋 **Welcome to Cardo Board Spice Intelligence AI!**\n\nI am your live analytical assistant. I have real-time access to our verified Spices Board auctions, Western Ghats climate models, and UN Comtrade telemetry.\n\nHow can I help you today?`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    suggestions: initialSuggestions.slice(0, 3),
+    badge: language === 'ml' ? 'സഹായത്തിന് സജ്ജം' : 'Spice AI',
+  });
+
+  const [messages, setMessages] = useState<BotMessage[]>([getInitialBotMsg()]);
+
+  // When language changes, update initial message if user hasn't started chatting
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length <= 1) {
+        return [getInitialBotMsg()];
+      }
+      return prev;
+    });
+  }, [language]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,7 +91,7 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
 
     // Simulate natural thinking delay (350ms) for pleasant conversational feel
     setTimeout(() => {
-      const response = answerQuery(query, context);
+      const response = answerQuery(query, context, language);
       const botMsg: BotMessage = {
         id: `b-${Date.now()}`,
         sender: 'bot',
@@ -82,16 +108,7 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
   };
 
   const handleClearChat = () => {
-    setMessages([
-      {
-        id: 'welcome-reset',
-        sender: 'bot',
-        text: `Conversation cleared. Ask me anything about cardamom prices, weather anomalies, production numbers, or future scenario models!`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        suggestions: INITIAL_SUGGESTIONS.slice(0, 3),
-        badge: 'Ready',
-      }
-    ]);
+    setMessages([getInitialBotMsg()]);
   };
 
   return (
@@ -101,17 +118,14 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
         <button
           onClick={() => setIsOpen(true)}
           className="group flex items-center gap-2.5 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/60 hover:shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 border border-emerald-400/40"
-          aria-label="Open Spice AI Chatbot"
+          aria-label={t.chatbot.triggerButton}
         >
           <div className="relative">
             <Bot className="w-5 h-5 text-white" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full" />
           </div>
-          <span className="font-semibold text-xs sm:text-sm tracking-wide">Ask Spice AI</span>
-          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-900/80 text-emerald-200 border border-emerald-400/30 uppercase tracking-wider">
-            Free
-          </span>
+          <span className="font-semibold text-xs sm:text-sm tracking-wide">{t.chatbot.triggerButton}</span>
         </button>
       )}
 
@@ -126,14 +140,14 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-xs sm:text-sm font-bold text-white">Spice Intelligence AI</h3>
+                  <h3 className="text-xs sm:text-sm font-bold text-white">{t.chatbot.headerTitle}</h3>
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-                    Engine A
+                    AI
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-                  Live Data Grounded • 100% Free
+                  {t.chatbot.headerSubtitle}
                 </p>
               </div>
             </div>
@@ -242,7 +256,7 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
             {isTyping && (
               <div className="flex items-center gap-2 text-slate-400 text-xs pl-2">
                 <Bot className="w-3.5 h-3.5 text-emerald-400 animate-spin" />
-                <span className="italic text-[11px]">Synthesizing telemetry data...</span>
+                <span className="italic text-[11px]">{t.chatbot.thinking}</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -251,9 +265,9 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
           {/* Quick Starter Chips on Empty/Initial View */}
           {messages.length <= 1 && (
             <div className="p-2 border-t border-slate-800 bg-slate-950/40">
-              <span className="text-[10px] text-slate-400 block px-2 mb-1.5 font-medium">Quick Prompts:</span>
+              <span className="text-[10px] text-slate-400 block px-2 mb-1.5 font-medium">{t.chatbot.quickPrompts}</span>
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                {INITIAL_SUGGESTIONS.map((sug, idx) => (
+                {initialSuggestions.map((sug, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(sug)}
@@ -280,7 +294,7 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about prices, weather, floods, exports..."
+                placeholder={t.chatbot.inputPlaceholder}
                 className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
               />
               <button
@@ -292,8 +306,8 @@ export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, onNavigateT
               </button>
             </form>
             <div className="mt-1 flex items-center justify-between text-[9px] text-slate-500 px-1">
-              <span>Cardo Board AI • In-Memory Client NLP</span>
-              <span className="text-emerald-500">Free Prototype Mode</span>
+              <span>Cardo Board AI</span>
+              <span className="text-emerald-500">Online</span>
             </div>
           </div>
         </div>
