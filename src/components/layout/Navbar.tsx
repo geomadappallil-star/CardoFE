@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, RefreshCw, Layers, MapPin, Calendar, Activity, ChevronDown, Sparkles } from 'lucide-react';
+import { Download, RefreshCw, Layers, MapPin, Calendar, Sparkles } from 'lucide-react';
 
 interface NavbarProps {
   spice: string;
@@ -60,61 +60,61 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'prices', label: 'Prices & Auctions' },
-    { id: 'weather', label: 'Weather & Climate' },
-    { id: 'production', label: 'Production & Yield' },
-    { id: 'trade', label: 'Trade & Consumption' },
-    { id: 'extrapolations', label: 'Extrapolations & Scenarios', highlight: true },
-    { id: 'provenance', label: 'Provenance & Quality' },
+    { id: 'overview', label: 'Executive Overview' },
+    { id: 'prices', label: 'Price Dynamics' },
+    { id: 'weather', label: 'Monsoon & Climate' },
+    { id: 'production', label: 'Cultivation & Yield' },
+    { id: 'trade', label: 'Trade Flows' },
+    { id: 'extrapolations', label: 'Scenario Models', highlight: true },
+    { id: 'provenance', label: 'Data Provenance' },
   ];
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <header className="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-50">
       {/* Top Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-600/30">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white text-sm sm:text-base shadow-lg shadow-emerald-600/30 shrink-0">
               CB
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-lg tracking-tight text-white">Cardo Board</span>
-                <span className="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-                  v1.2 Active
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-bold text-base sm:text-lg tracking-tight text-white">Cardo Board</span>
+                <span className="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                  v1.3 Live
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Global Spice Intelligence & Scenario Extrapolations • Western Ghats & Global</p>
+              <p className="hidden sm:block text-xs text-slate-400">Global Spice Intelligence & Scenario Extrapolations • Western Ghats & Global</p>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={onRefresh}
-              className={`p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors ${
                 refreshing ? 'animate-spin text-emerald-400' : ''
               }`}
               title="Refresh Data"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={onExport}
-              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>Export</span>
             </button>
           </div>
         </div>
 
-        {/* Global Filter Bar */}
-        <div className="py-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+        {/* Global Filter Bar - Mobile Horizontally Scrollable without multi-row wrap */}
+        <div className="py-2 border-t border-slate-800/80 overflow-x-auto no-scrollbar flex items-center gap-3 sm:gap-4 text-xs whitespace-nowrap">
           {/* Spice Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 flex items-center gap-1 font-medium">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
               <Layers className="w-3.5 h-3.5 text-emerald-400" /> Spice:
             </span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
@@ -122,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={s.code}
                   onClick={() => setSpice(s.code)}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
                     spice === s.code
                       ? 'bg-emerald-600 text-white font-medium shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
@@ -135,8 +135,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Geography Scope */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 flex items-center gap-1 font-medium">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
               <MapPin className="w-3.5 h-3.5 text-emerald-400" /> Scope:
             </span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
@@ -144,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={sc.code}
                   onClick={() => setScope(sc.code)}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
                     scope === sc.code
                       ? 'bg-slate-700 text-emerald-300 font-medium'
                       : 'text-slate-400 hover:text-slate-200'
@@ -156,9 +156,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Date Presets */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 flex items-center gap-1 font-medium">
+          {/* Date Presets (Timeframe) */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
               <Calendar className="w-3.5 h-3.5 text-emerald-400" /> Range:
             </span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
@@ -166,9 +166,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={p.code}
                   onClick={() => setDateRangePreset(p.code)}
-                  className={`px-2 py-1 rounded-md transition-all ${
+                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
                     dateRangePreset === p.code
-                      ? 'bg-slate-700 text-white font-medium'
+                      ? 'bg-slate-700 text-white font-medium shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -179,14 +179,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Frequency */}
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium">Freq:</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-slate-400 font-medium text-[11px] sm:text-xs">Freq:</span>
             <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
               {frequencies.map(f => (
                 <button
                   key={f.code}
                   onClick={() => setFrequency(f.code)}
-                  className={`px-2 py-1 rounded-md transition-all ${
+                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
                     frequency === f.code
                       ? 'bg-slate-700 text-white font-medium'
                       : 'text-slate-400 hover:text-slate-200'
@@ -199,13 +199,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs - Horizontally scrollable on mobile */}
         <div className="flex border-t border-slate-800 overflow-x-auto no-scrollbar">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-3 px-4 font-medium text-xs sm:text-sm whitespace-nowrap border-b-2 flex items-center gap-1.5 transition-colors ${
+              className={`py-2.5 sm:py-3 px-3 sm:px-4 font-medium text-xs sm:text-sm whitespace-nowrap border-b-2 flex items-center gap-1.5 transition-colors shrink-0 ${
                 activeTab === tab.id
                   ? 'border-emerald-500 text-emerald-400'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'

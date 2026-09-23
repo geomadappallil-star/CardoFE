@@ -16,6 +16,7 @@ import {
   DashboardSummary, PriceSeriesPoint, WeatherPoint, 
   ProductionRecord, TradeRecord, ConsumptionRecord 
 } from './types/index.js';
+import { logVisitorEvent } from './api/visitorTracker.js';
 
 export function App() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -90,6 +91,10 @@ export function App() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    logVisitorEvent(activeTab);
+  }, [activeTab]);
+
   const handleRefresh = () => {
     setRefreshing(true);
     loadData();
@@ -113,11 +118,13 @@ export function App() {
         onRefresh={handleRefresh}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         {activeTab === 'overview' && (
           <OverviewTab
             summary={summary}
             priceSeries={priceSeries}
+            weatherData={weatherData}
+            dateRangePreset={dateRangePreset}
             loading={loading}
             onNavigateTab={setActiveTab}
           />
