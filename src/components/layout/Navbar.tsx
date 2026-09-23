@@ -147,25 +147,28 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Global Filter Bar - Mobile Horizontally Scrollable without multi-row wrap */}
         <div className="py-2 border-t border-slate-800/80 overflow-x-auto no-scrollbar flex items-center gap-3 sm:gap-4 text-xs whitespace-nowrap">
-          {/* Spice Selector */}
+          {/* Spice Selector Dropdown */}
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
               <Layers className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'ഇനം:' : 'Spice:'}
             </span>
-            <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-              {spices.map(s => (
-                <button
-                  key={s.code}
-                  onClick={() => setSpice(s.code)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
-                    spice === s.code
-                      ? 'bg-emerald-600 text-white font-medium shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {s.name}
-                </button>
-              ))}
+            <div className="relative">
+              <select
+                value={spice}
+                onChange={(e) => setSpice(e.target.value)}
+                className="bg-slate-950 text-emerald-300 text-[11px] sm:text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none pr-6 shadow-sm hover:border-slate-700 transition-colors"
+              >
+                {spices.map(s => (
+                  <option key={s.code} value={s.code} className="bg-slate-900 text-slate-200">
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
 

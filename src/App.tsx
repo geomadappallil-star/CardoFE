@@ -66,12 +66,24 @@ export function App() {
   }, [spice, scope, dateRangePreset, frequency, activeTab, language]);
 
   const getDateBounds = useCallback(() => {
-    const to = '2026-09-15';
-    let from = '2016-01-01';
-    if (dateRangePreset === '1Y') from = '2025-09-15';
-    else if (dateRangePreset === '3Y') from = '2023-09-15';
-    else if (dateRangePreset === '5Y') from = '2021-09-15';
-    else if (dateRangePreset === 'ALL') from = '2016-01-01';
+    const today = new Date();
+    const to = today.toISOString().slice(0, 10);
+    let from = '2014-11-01';
+    if (dateRangePreset === '1Y') {
+      const d = new Date(today);
+      d.setFullYear(d.getFullYear() - 1);
+      from = d.toISOString().slice(0, 10);
+    } else if (dateRangePreset === '3Y') {
+      const d = new Date(today);
+      d.setFullYear(d.getFullYear() - 3);
+      from = d.toISOString().slice(0, 10);
+    } else if (dateRangePreset === '5Y') {
+      const d = new Date(today);
+      d.setFullYear(d.getFullYear() - 5);
+      from = d.toISOString().slice(0, 10);
+    } else if (dateRangePreset === 'ALL') {
+      from = '2014-11-01';
+    }
     return { from, to };
   }, [dateRangePreset]);
 

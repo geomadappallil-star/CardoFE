@@ -76,6 +76,20 @@ export interface Translations {
     recentAuctionsSubtitle: string;
     verifiedData: string;
     swipePrompt: string;
+    priceModeAvg: string;
+    priceModeMax: string;
+    priceModeMin: string;
+    priceModeAll: string;
+    maxPriceCardTitle: string;
+    minPriceCardTitle: string;
+    searchAuctioneer: string;
+    page: string;
+    of: string;
+    first: string;
+    prev: string;
+    next: string;
+    last: string;
+    totalAuctionsCount: string;
   };
 
   // Table Columns
@@ -229,6 +243,20 @@ export const translations: Record<Language, Translations> = {
       recentAuctionsSubtitle: 'Official auction realizations from Spices Board of India',
       verifiedData: 'Verified Data',
       swipePrompt: 'Swipe horizontally to navigate full timeline',
+      priceModeAvg: 'Average Price',
+      priceModeMax: 'Maximum Price',
+      priceModeMin: 'Minimum Price',
+      priceModeAll: 'Price Envelope',
+      maxPriceCardTitle: 'Period Peak Price',
+      minPriceCardTitle: 'Period Floor Price',
+      searchAuctioneer: 'Search auctioneer or market...',
+      page: 'Page',
+      of: 'of',
+      first: 'First',
+      prev: 'Previous',
+      next: 'Next',
+      last: 'Last',
+      totalAuctionsCount: 'verified auctions',
     },
 
     table: {
@@ -374,6 +402,20 @@ export const translations: Record<Language, Translations> = {
       recentAuctionsSubtitle: 'സ്പൈസസ് ബോർഡ് ഓഫ് ഇന്ത്യ അംഗീകൃത ലേല വിവരങ്ങൾ',
       verifiedData: 'സ്ഥിരീകരിച്ച വിവരം',
       swipePrompt: 'പൂർണ്ണ വിവരങ്ങൾ കാണാൻ ഇടത്തോട്ടും വലത്തോട്ടും നീക്കുക',
+      priceModeAvg: 'ശരാശരി വില',
+      priceModeMax: 'പരമാവധി വില',
+      priceModeMin: 'കുറഞ്ഞ വില',
+      priceModeAll: 'എല്ലാ വിലകളും',
+      maxPriceCardTitle: 'പരമാവധി നിരക്ക്',
+      minPriceCardTitle: 'കുറഞ്ഞ നിരക്ക്',
+      searchAuctioneer: 'ലേല കമ്പനി തിരയുക...',
+      page: 'പേജ്',
+      of: '/',
+      first: 'ആദ്യം',
+      prev: 'മുമ്പത്തെത്',
+      next: 'അടുത്തത്',
+      last: 'അവസാനം',
+      totalAuctionsCount: 'ലേല വിവരങ്ങൾ',
     },
 
     table: {

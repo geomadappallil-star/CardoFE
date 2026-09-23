@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   TrendingUp, TrendingDown, CloudRain, AlertTriangle, CheckCircle2, 
-  Layers, DollarSign, Scale, ArrowUpRight, MoveHorizontal, Calendar
+  Layers, DollarSign, Scale, ArrowUpRight, MoveHorizontal, Calendar,
+  ArrowUp, ArrowDown, Search
 } from 'lucide-react';
 import { ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Brush } from 'recharts';
 import { DashboardSummary, PriceSeriesPoint, WeatherPoint } from '../../types/index.js';
@@ -24,13 +25,21 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   priceSeries,
   weatherData = [],
   dateRangePreset = 'ALL',
-  scope = 'all',
+  scope = 'idukki',
   frequency = 'monthly',
   language = 'en',
   loading,
   onNavigateTab
 }) => {
   const t = translations[language] || translations.en;
+
+  // Price Mode Sub-Tabs: avg | max | min | all
+  const [priceMode, setPriceMode] = useState<'avg' | 'max' | 'min' | 'all'>('avg');
+
+  // Pagination & Search for Verified Auctions Table
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const pageSize = 10;
 
   const chartMinWidth = useMemo(() => {
     if (!priceSeries || priceSeries.length === 0) return 1000;
@@ -127,6 +136,24 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
     };
   }, [weatherData, rangeBadge, freqLabel, scopeLabel, summary]);
 
+  // Filtered & Paginated Auctions
+  const filteredAuctions = useMemo(() => {
+    if (!summary?.recent_auctions) return [];
+    if (!searchTerm.trim()) return summary.recent_auctions;
+    const q = searchTerm.toLowerCase().trim();
+    return summary.recent_auctions.filter(a => 
+      a.seller_or_auctioneer?.toLowerCase().includes(q) ||
+      a.market_name?.toLowerCase().includes(q) ||
+      a.date?.includes(q)
+    );
+  }, [summary?.recent_auctions, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAuctions.length / pageSize));
+  const paginatedAuctions = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredAuctions.slice(start, start + pageSize);
+  }, [filteredAuctions, currentPage, pageSize]);
+
   const prod = summary?.production_overview;
   const isUp = periodPriceStats.changePct >= 0;
 
@@ -161,18 +188,34 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       {/* KPI Cards Grid - Responsive: 2 cols on mobile, 4 on desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-        {/* Card 1: Benchmark Mean Price */}
+        {/* Card 1: Dynamic Price Card (Reflects Active Price Mode Tab) */}
         <div className="p-3.5 sm:p-5 rounded-xl bg-slate-900 border border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-start">
-              <span className="text-[11px] sm:text-xs font-medium text-slate-400">{t.overview.avgPrice}</span>
-              <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
-                <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-[11px] sm:text-xs font-medium text-slate-400">
+                {priceMode === 'avg' && t.overview.avgPrice}
+                {priceMode === 'max' && t.overview.maxPriceCardTitle}
+                {priceMode === 'min' && t.overview.minPriceCardTitle}
+                {priceMode === 'all' && t.overview.priceSpread}
+              </span>
+              <div className={`p-1.5 sm:p-2 rounded-lg border ${
+                priceMode === 'max'
+                  ? 'bg-cyan-950/60 text-cyan-400 border-cyan-800/40'
+                  : priceMode === 'min'
+                    ? 'bg-amber-950/60 text-amber-400 border-amber-800/40'
+                    : 'bg-emerald-950/60 text-emerald-400 border-emerald-800/40'
+              }`}>
+                {priceMode === 'max' && <ArrowUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                {priceMode === 'min' && <ArrowDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                {(priceMode === 'avg' || priceMode === 'all') && <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </div>
             </div>
             <div className="mt-2 flex items-baseline gap-1.5">
               <span className="text-lg sm:text-2xl font-bold text-white tracking-tight">
-                ₹{periodPriceStats.avgPrice.toLocaleString('en-IN') || '—'}
+                {priceMode === 'avg' && `₹${periodPriceStats.avgPrice.toLocaleString('en-IN')}`}
+                {priceMode === 'max' && `₹${periodPriceStats.maxPrice.toLocaleString('en-IN')}`}
+                {priceMode === 'min' && `₹${periodPriceStats.minPrice.toLocaleString('en-IN')}`}
+                {priceMode === 'all' && `₹${periodPriceStats.avgPrice.toLocaleString('en-IN')}`}
               </span>
               <span className="text-[10px] sm:text-xs text-slate-400">{t.overview.perKg}</span>
             </div>
@@ -225,7 +268,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
             <div className="mt-2 flex items-baseline gap-1.5">
               <span className="text-lg sm:text-2xl font-bold text-white tracking-tight">
-                {periodWeatherStats?.rainfall_actual_mm ? periodWeatherStats.rainfall_actual_mm.toLocaleString() : '—'}
+                {periodWeatherStats?.rainfall_actual_mm?.toLocaleString() || '—'}
               </span>
               <span className="text-[10px] sm:text-xs text-slate-400">{t.overview.rainfallMmTotal}</span>
             </div>
@@ -271,18 +314,59 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
       {/* Main Chart: Horizontally Scrollable Price & Volume Trajectory */}
       <div className="p-4 sm:p-5 rounded-xl bg-slate-900 border border-slate-800">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <h3 className="text-sm font-semibold text-white">{t.overview.priceTrajectoryTitle}</h3>
             <p className="text-xs text-slate-400">
               {t.overview.priceTrajectorySubtitle} ({scopeLabel} • {freqLabel} • {rangeBadge})
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 text-slate-300 text-xs font-mono">
-              <MoveHorizontal className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-              <span>{priceSeries.length} points</span>
-            </span>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Price Mode Sub-Tabs (Average, Maximum, Minimum, All) */}
+            <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[11px] sm:text-xs font-medium">
+              <button
+                onClick={() => setPriceMode('avg')}
+                className={`px-2.5 py-1 rounded transition-all ${
+                  priceMode === 'avg'
+                    ? 'bg-emerald-600 text-white shadow-sm font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {t.overview.priceModeAvg}
+              </button>
+              <button
+                onClick={() => setPriceMode('max')}
+                className={`px-2.5 py-1 rounded transition-all ${
+                  priceMode === 'max'
+                    ? 'bg-cyan-600 text-white shadow-sm font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {t.overview.priceModeMax}
+              </button>
+              <button
+                onClick={() => setPriceMode('min')}
+                className={`px-2.5 py-1 rounded transition-all ${
+                  priceMode === 'min'
+                    ? 'bg-amber-600 text-white shadow-sm font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {t.overview.priceModeMin}
+              </button>
+              <button
+                onClick={() => setPriceMode('all')}
+                className={`px-2.5 py-1 rounded transition-all ${
+                  priceMode === 'all'
+                    ? 'bg-slate-700 text-white shadow-sm font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {t.overview.priceModeAll}
+              </button>
+            </div>
+
             <button 
               onClick={() => onNavigateTab('prices')}
               className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium ml-1"
@@ -311,14 +395,38 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }}
                   formatter={(val: any, name: string) => [
-                    name.includes('Price') ? `₹${Number(val).toLocaleString()}` : `${Number(val).toLocaleString()} kg`, 
+                    name.includes('Price') || name.includes('Mean') || name.includes('Max') || name.includes('Min')
+                      ? `₹${Number(val).toLocaleString()}` 
+                      : `${Number(val).toLocaleString()} kg`, 
                     name
                   ]}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                <Bar yAxisId="right" dataKey="total_arrived_kg" fill="#334155" name="Arrivals (kg)" opacity={0.6} />
-                <Line yAxisId="left" type="monotone" dataKey="weighted_mean" stroke="#10b981" strokeWidth={2.2} dot={false} name="Weighted Mean Price (₹)" />
-                <Line yAxisId="left" type="monotone" dataKey="unweighted_mean" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="Unweighted Mean (₹)" />
+                <Bar yAxisId="right" dataKey="total_arrived_kg" fill="#334155" name="Arrivals (kg)" opacity={0.5} />
+
+                {/* Conditional Lines Based on Price Mode */}
+                {priceMode === 'avg' && (
+                  <>
+                    <Line yAxisId="left" type="monotone" dataKey="weighted_mean" stroke="#10b981" strokeWidth={2.4} dot={false} name="Weighted Mean Price (₹)" />
+                    <Line yAxisId="left" type="monotone" dataKey="unweighted_mean" stroke="#38bdf8" strokeWidth={1.5} strokeDasharray="3 3" dot={false} name="Unweighted Mean (₹)" />
+                  </>
+                )}
+
+                {priceMode === 'max' && (
+                  <Line yAxisId="left" type="monotone" dataKey="max_price" stroke="#06b6d4" strokeWidth={2.5} dot={false} name="Maximum Peak Price (₹)" />
+                )}
+
+                {priceMode === 'min' && (
+                  <Line yAxisId="left" type="monotone" dataKey="min_price" stroke="#f59e0b" strokeWidth={2.5} dot={false} name="Minimum Floor Price (₹)" />
+                )}
+
+                {priceMode === 'all' && (
+                  <>
+                    <Line yAxisId="left" type="monotone" dataKey="max_price" stroke="#06b6d4" strokeWidth={1.8} strokeDasharray="3 3" dot={false} name="Max Peak (₹)" />
+                    <Line yAxisId="left" type="monotone" dataKey="weighted_mean" stroke="#10b981" strokeWidth={2.5} dot={false} name="Weighted Mean (₹)" />
+                    <Line yAxisId="left" type="monotone" dataKey="min_price" stroke="#f59e0b" strokeWidth={1.8} strokeDasharray="3 3" dot={false} name="Min Floor (₹)" />
+                  </>
+                )}
 
                 {/* Timeline slider navigator */}
                 <Brush 
@@ -334,23 +442,42 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
-      {/* Recent Verified E-Auctions Table */}
+      {/* Recent Verified E-Auctions Table — Paginated & Searchable */}
       <div className="p-4 sm:p-5 rounded-xl bg-slate-900 border border-slate-800">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <h3 className="text-sm font-semibold text-white">{t.overview.recentAuctionsTitle}</h3>
             <p className="text-xs text-slate-400">{t.overview.recentAuctionsSubtitle}</p>
           </div>
-          <span className="px-2.5 py-1 rounded text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{t.overview.verifiedData}</span>
-          </span>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search Box */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder={t.overview.searchAuctioneer}
+                className="bg-slate-950 text-slate-200 text-xs pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-emerald-500 w-44 sm:w-56"
+              />
+            </div>
+
+            <span className="px-2.5 py-1 rounded text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800/60 flex items-center gap-1.5 shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{filteredAuctions.length} {t.overview.totalAuctionsCount}</span>
+            </span>
+          </div>
         </div>
 
         <div className="overflow-x-auto border border-slate-800/80 rounded-lg">
           <table className="w-full text-left text-xs whitespace-nowrap">
             <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800">
               <tr>
+                <th className="py-2.5 px-3 font-medium text-center">#</th>
                 <th className="py-2.5 px-3 font-medium">{t.table.date}</th>
                 <th className="py-2.5 px-3 font-medium">{t.table.auctioneer}</th>
                 <th className="py-2.5 px-3 font-medium">{t.table.marketHub}</th>
@@ -363,25 +490,82 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {summary?.recent_auctions.map((auc) => (
-                <tr key={auc.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-2.5 px-3 font-mono text-slate-400">{auc.date}</td>
-                  <td className="py-2.5 px-3 font-medium text-white">{auc.seller_or_auctioneer}</td>
-                  <td className="py-2.5 px-3 text-slate-400">{auc.market_name || 'Vandanmettu'}</td>
-                  <td className="py-2.5 px-3 text-right">{auc.quantity_arrived?.toLocaleString()}</td>
-                  <td className="py-2.5 px-3 text-right text-emerald-400 font-medium">{auc.quantity_sold?.toLocaleString()}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-400">₹{auc.min_price}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-400">₹{auc.max_price}</td>
-                  <td className="py-2.5 px-3 text-right font-bold text-white">₹{auc.avg_price}</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/50">
-                      {auc.quality_status}
-                    </span>
+              {paginatedAuctions.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="py-8 text-center text-slate-500">
+                    No verified auctions found matching "{searchTerm}"
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedAuctions.map((auc, idx) => (
+                  <tr key={auc.id || idx} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-2.5 px-3 text-center font-mono text-slate-500">
+                      {(currentPage - 1) * pageSize + idx + 1}
+                    </td>
+                    <td className="py-2.5 px-3 font-mono text-slate-400">{auc.date}</td>
+                    <td className="py-2.5 px-3 font-medium text-white">{auc.seller_or_auctioneer}</td>
+                    <td className="py-2.5 px-3 text-slate-400">{auc.market_name || 'Vandanmettu'}</td>
+                    <td className="py-2.5 px-3 text-right">{auc.quantity_arrived?.toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right text-emerald-400 font-medium">{auc.quantity_sold?.toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right text-slate-400">₹{auc.min_price}</td>
+                    <td className="py-2.5 px-3 text-right text-slate-400">₹{auc.max_price}</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-white">₹{auc.avg_price}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/50">
+                        {auc.quality_status || 'VERIFIED'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Navigation Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-800/80 text-xs text-slate-400">
+          <div>
+            <span>
+              {t.overview.page} <strong className="text-white">{currentPage}</strong> {t.overview.of} <strong className="text-white">{totalPages}</strong>
+            </span>
+            <span className="ml-2 text-slate-500">
+              ({filteredAuctions.length} {t.overview.totalAuctionsCount})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 font-medium transition-colors"
+            >
+              {t.overview.first}
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 font-medium transition-colors"
+            >
+              {t.overview.prev}
+            </button>
+            <span className="px-2 text-slate-500">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 font-medium transition-colors"
+            >
+              {t.overview.next}
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 font-medium transition-colors"
+            >
+              {t.overview.last}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -73,7 +73,7 @@ export async function fetchSummary(spiceCode: string = 'small_cardamom', scope: 
   const priceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=1`;
   const pastPriceUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&date=lte.2026-08-15&order=date.desc&limit=1`;
   const weatherUrl = `${SUPABASE_URL}/rest/v1/fact_weather?region_id=eq.${weatherCfg.id}&order=date.desc&limit=30`;
-  const recentUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=12`;
+  const recentUrl = `${SUPABASE_URL}/rest/v1/fact_price?spice_id=eq.${spiceId}${marketFilter}&order=date.desc,id.desc&limit=100`;
   const prodUrl = `${SUPABASE_URL}/rest/v1/fact_production?spice_id=eq.${spiceId}&period_start=gte.2026-01-01`;
 
   const [priceRes, pastRes, weatherRes, recentRes, prodRes] = await Promise.all([
