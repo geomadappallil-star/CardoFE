@@ -153,6 +153,7 @@ export function App() {
         {activeTab === 'daily_auction' && (
           <DailyAuctionTab
             summary={summary}
+            spice={spice}
             language={language}
             loading={loading}
             onNavigateTab={setActiveTab}
@@ -187,6 +188,7 @@ export function App() {
         {activeTab === 'weather' && (
           <WeatherTab
             weatherData={weatherData}
+            spice={spice}
             scope={scope}
             frequency={frequency}
             language={language}
@@ -207,6 +209,7 @@ export function App() {
           <TradeTab
             tradeData={tradeData}
             consumptionData={consumptionData}
+            spice={spice}
             scope={scope}
             language={language}
             loading={loading}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Download, RefreshCw, Layers, MapPin, Calendar, Sparkles, Languages } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Download, RefreshCw, Layers, MapPin, Calendar, Sparkles, Languages, ChevronDown, Check } from 'lucide-react';
 import { Language, translations } from '../../i18n/translations.js';
 
 interface NavbarProps {
@@ -39,21 +39,52 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const t = translations[language];
 
+  const [isSpiceOpen, setIsSpiceOpen] = useState(false);
+  const [isScopeOpen, setIsScopeOpen] = useState(false);
+  const spiceRef = useRef<HTMLDivElement>(null);
+  const scopeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (spiceRef.current && !spiceRef.current.contains(e.target as Node)) {
+        setIsSpiceOpen(false);
+      }
+      if (scopeRef.current && !scopeRef.current.contains(e.target as Node)) {
+        setIsScopeOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSpiceOpen(false);
+        setIsScopeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const spices = [
-    { code: 'small_cardamom', name: t.spices.small_cardamom },
-    { code: 'black_pepper', name: t.spices.black_pepper },
-    { code: 'nutmeg', name: t.spices.nutmeg },
-    { code: 'cloves', name: t.spices.cloves },
+    { code: 'small_cardamom', name: t.spices.small_cardamom, badge: 'Live E-Auctions' },
+    { code: 'black_pepper', name: t.spices.black_pepper, badge: 'Kochi Terminal' },
+    { code: 'nutmeg', name: t.spices.nutmeg, badge: 'Kalpetta Spot' },
+    { code: 'cloves', name: t.spices.cloves, badge: 'Domestic Mandi' },
   ];
 
   const scopes = [
-    { code: 'all', label: t.scopes.all },
-    { code: 'idukki', label: t.scopes.idukki },
-    { code: 'bodinayakanur', label: t.scopes.bodinayakanur },
-    { code: 'kerala', label: t.scopes.kerala },
-    { code: 'india', label: t.scopes.india },
-    { code: 'world', label: t.scopes.world },
+    { code: 'all', label: t.scopes.all, badge: 'All Hubs' },
+    { code: 'idukki', label: t.scopes.idukki, badge: 'High Ranges' },
+    { code: 'bodinayakanur', label: t.scopes.bodinayakanur, badge: 'TN Mandi' },
+    { code: 'kerala', label: t.scopes.kerala, badge: 'State Wide' },
+    { code: 'india', label: t.scopes.india, badge: 'National' },
+    { code: 'world', label: t.scopes.world, badge: 'Guatemala' },
   ];
+
+  const currentSpice = spices.find(s => s.code === spice) || spices[0];
+  const currentScope = scopes.find(sc => sc.code === scope) || scopes[0];
 
   const presets = [
     { code: '1Y', label: t.ranges['1Y'] },
@@ -68,8 +99,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     { code: 'annual', label: t.frequencies.annual },
   ];
 
+  const isAuctionSpice = spice === 'small_cardamom';
+  const dailyTabLabel = isAuctionSpice ? t.tabs.dailyAuction : t.tabs.dailyMarket;
+
   const tabs = [
-    { id: 'daily_auction', label: t.tabs.dailyAuction, highlight: true },
+    { id: 'daily_auction', label: dailyTabLabel, highlight: true },
     { id: 'overview', label: t.tabs.overview },
     { id: 'prices', label: t.tabs.prices },
     { id: 'weather', label: t.tabs.weather },
@@ -146,53 +180,112 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Global Filter Bar - Mobile Horizontally Scrollable without multi-row wrap */}
-        <div className="py-2 border-t border-slate-800/80 overflow-x-auto no-scrollbar flex items-center gap-3 sm:gap-4 text-xs whitespace-nowrap">
-          {/* Spice Selector Dropdown */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
-              <Layers className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'ഇനം:' : 'Spice:'}
-            </span>
-            <div className="relative">
-              <select
-                value={spice}
-                onChange={(e) => setSpice(e.target.value)}
-                className="bg-slate-950 text-emerald-300 text-[11px] sm:text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none pr-6 shadow-sm hover:border-slate-700 transition-colors"
-              >
-                {spices.map(s => (
-                  <option key={s.code} value={s.code} className="bg-slate-900 text-slate-200">
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-slate-400">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
+        {/* Global Filter Bar - Sleek Custom Dropdowns */}
+        <div className="py-2 border-t border-slate-800/80 overflow-visible flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-4 text-xs whitespace-nowrap">
+          {/* Custom Spice Selector Dropdown */}
+          <div className="relative shrink-0" ref={spiceRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSpiceOpen(!isSpiceOpen);
+                setIsScopeOpen(false);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-emerald-500/60 transition-all text-xs font-medium shadow-sm group focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              aria-expanded={isSpiceOpen}
+            >
+              <div className="p-1 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-800/60 group-hover:scale-105 transition-transform">
+                <Layers className="w-3.5 h-3.5" />
               </div>
-            </div>
+              <span className="text-slate-400 hidden xs:inline">{language === 'ml' ? 'ഇനം:' : 'Spice:'}</span>
+              <span className="font-semibold text-emerald-300">{currentSpice.name}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isSpiceOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            </button>
+
+            {isSpiceOpen && (
+              <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl bg-slate-900 border border-slate-700/90 shadow-2xl shadow-black/90 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 backdrop-blur-lg">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1">
+                  {language === 'ml' ? 'സുഗന്ധവ്യഞ്ജനം തിരഞ്ഞെടുക്കുക' : 'Select Spice'}
+                </div>
+                {spices.map(s => (
+                  <button
+                    key={s.code}
+                    type="button"
+                    onClick={() => {
+                      setSpice(s.code);
+                      setIsSpiceOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
+                      spice === s.code
+                        ? 'bg-emerald-950/70 text-emerald-300 font-semibold border-l-2 border-emerald-500'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="font-medium text-white">{s.name}</div>
+                      {s.badge && (
+                        <div className="text-[10px] text-slate-400 font-normal">
+                          {s.badge}
+                        </div>
+                      )}
+                    </div>
+                    {spice === s.code && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Geography Scope */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
-              <MapPin className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'മേഖല:' : 'Scope:'}
-            </span>
-            <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-              {scopes.map(sc => (
-                <button
-                  key={sc.code}
-                  onClick={() => setScope(sc.code)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
-                    scope === sc.code
-                      ? 'bg-slate-700 text-emerald-300 font-medium'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {sc.label}
-                </button>
-              ))}
-            </div>
+          {/* Custom Scope Selector Dropdown */}
+          <div className="relative shrink-0" ref={scopeRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsScopeOpen(!isScopeOpen);
+                setIsSpiceOpen(false);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-sky-500/60 transition-all text-xs font-medium shadow-sm group focus:outline-none focus:ring-1 focus:ring-sky-500"
+              aria-expanded={isScopeOpen}
+            >
+              <div className="p-1 rounded-md bg-sky-950 text-sky-400 border border-sky-800/60 group-hover:scale-105 transition-transform">
+                <MapPin className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-slate-400 hidden xs:inline">{language === 'ml' ? 'മേഖല:' : 'Scope:'}</span>
+              <span className="font-semibold text-sky-300">{currentScope.label}</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isScopeOpen ? 'rotate-180 text-sky-400' : ''}`} />
+            </button>
+
+            {isScopeOpen && (
+              <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl bg-slate-900 border border-slate-700/90 shadow-2xl shadow-black/90 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 backdrop-blur-lg">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1">
+                  {language === 'ml' ? 'മേഖല തിരഞ്ഞെടുക്കുക' : 'Select Geographic Scope'}
+                </div>
+                {scopes.map(sc => (
+                  <button
+                    key={sc.code}
+                    type="button"
+                    onClick={() => {
+                      setScope(sc.code);
+                      setIsScopeOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
+                      scope === sc.code
+                        ? 'bg-sky-950/70 text-sky-300 font-semibold border-l-2 border-sky-500'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="font-medium text-white">{sc.label}</div>
+                      {sc.badge && (
+                        <div className="text-[10px] text-slate-400 font-normal">
+                          {sc.badge}
+                        </div>
+                      )}
+                    </div>
+                    {scope === sc.code && <Check className="w-3.5 h-3.5 text-sky-400 shrink-0 ml-2" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Date Presets (Timeframe) */}

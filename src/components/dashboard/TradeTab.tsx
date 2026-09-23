@@ -10,6 +10,7 @@ import { Language, translations } from '../../i18n/translations.js';
 interface TradeTabProps {
   tradeData: TradeRecord[];
   consumptionData: ConsumptionRecord[];
+  spice?: string;
   scope?: string;
   language?: Language;
   loading: boolean;
@@ -18,11 +19,45 @@ interface TradeTabProps {
 export const TradeTab: React.FC<TradeTabProps> = ({
   tradeData,
   consumptionData,
+  spice = 'small_cardamom',
   scope = 'all',
   language = 'en',
   loading
 }) => {
   const t = translations[language] || translations.en;
+
+  const spiceTradeProfiles: Record<string, { corridor: string; corridorSub: string; demand: string; demandSub: string; unitVal: string }> = {
+    small_cardamom: {
+      corridor: 'India → Saudi Arabia & UAE',
+      corridorSub: 'Premium Alleppey Green Extra Bold (AGEB) Cardamom',
+      demand: 'Saudi Arabia (~0.38 kg/capita)',
+      demandSub: 'Gahwa traditional cardamom coffee cultural staple',
+      unitVal: '$22.00 - $26.00 / kg'
+    },
+    black_pepper: {
+      corridor: 'India → USA, Europe & SE Asia',
+      corridorSub: 'Malabar Garbled & Tellicherry Extra Bold (TGSEB)',
+      demand: 'Global Seasoning & Processing',
+      demandSub: 'High-piperine Indian black pepper culinary corridor',
+      unitVal: '$6.50 - $8.20 / kg'
+    },
+    nutmeg: {
+      corridor: 'India → Middle East & East Asia',
+      corridorSub: 'Kerala Sholayar & Kalpetta Nutmeg & Mace (Jaiphal / Javitri)',
+      demand: 'Culinary Blends & Confectionery',
+      demandSub: 'Essential oleoresins, meat seasoning & confectionery',
+      unitVal: '$4.20 - $5.80 / kg'
+    },
+    cloves: {
+      corridor: 'Western Ghats Belt → National Mandis',
+      corridorSub: 'High Eugenol Oil Western Ghats Cloves',
+      demand: 'Pharma, Oral Care & Spices',
+      demandSub: 'Ayurvedic dental formulations & spice blends',
+      unitVal: '$9.00 - $11.50 / kg'
+    },
+  };
+
+  const currentTrade = spiceTradeProfiles[spice] || spiceTradeProfiles.small_cardamom;
 
   if (loading) {
     return (
@@ -41,8 +76,8 @@ export const TradeTab: React.FC<TradeTabProps> = ({
             <Globe className="w-4 h-4" />
             <span>{t.trade.exportCorridors}</span>
           </div>
-          <p className="mt-2 text-lg font-bold text-white">India → Saudi Arabia & UAE</p>
-          <span className="text-xs text-slate-400">Premium Alleppey Green Extra Bold (AGEB) Cardamom</span>
+          <p className="mt-2 text-lg font-bold text-white">{currentTrade.corridor}</p>
+          <span className="text-xs text-slate-400">{currentTrade.corridorSub}</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
@@ -50,8 +85,8 @@ export const TradeTab: React.FC<TradeTabProps> = ({
             <Coffee className="w-4 h-4" />
             <span>{t.trade.perCapita}</span>
           </div>
-          <p className="mt-2 text-lg font-bold text-white">Saudi Arabia (~0.38 kg/capita)</p>
-          <span className="text-xs text-slate-400">Gahwa traditional cardamom coffee cultural staple</span>
+          <p className="mt-2 text-lg font-bold text-white">{currentTrade.demand}</p>
+          <span className="text-xs text-slate-400">{currentTrade.demandSub}</span>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
@@ -59,7 +94,7 @@ export const TradeTab: React.FC<TradeTabProps> = ({
             <ArrowUpRight className="w-4 h-4" />
             <span>{t.trade.unitValue}</span>
           </div>
-          <p className="mt-2 text-lg font-bold text-white">$22.00 - $26.00 / kg</p>
+          <p className="mt-2 text-lg font-bold text-white">{currentTrade.unitVal}</p>
           <span className="text-xs text-slate-400">UN Comtrade FOB Export Value Realization</span>
         </div>
       </div>

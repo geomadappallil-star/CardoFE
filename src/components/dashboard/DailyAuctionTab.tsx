@@ -9,6 +9,7 @@ import { Language, translations } from '../../i18n/translations.js';
 
 interface DailyAuctionTabProps {
   summary: DashboardSummary | null;
+  spice?: string;
   language?: Language;
   loading: boolean;
   onNavigateTab: (tab: string) => void;
@@ -16,12 +17,24 @@ interface DailyAuctionTabProps {
 
 export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
   summary,
+  spice = 'small_cardamom',
   language = 'en',
   loading,
   onNavigateTab
 }) => {
   const t = translations[language] || translations.en;
   const dTab = t.dailyAuctionTab;
+
+  const spiceNames: Record<string, { en: string; ml: string }> = {
+    small_cardamom: { en: 'Small Cardamom', ml: 'ചെറിയ ഏലം' },
+    black_pepper: { en: 'Black Pepper', ml: 'കുരുമുളക്' },
+    nutmeg: { en: 'Nutmeg', ml: 'ജാതിക്ക' },
+    cloves: { en: 'Cloves', ml: 'ഗ്രാമ്പൂ' },
+  };
+
+  const isAuctionSpice = spice === 'small_cardamom';
+  const currentSpice = spiceNames[spice] || { en: 'Spice', ml: 'സുഗന്ധവ്യഞ്ജനം' };
+  const spiceDisplayName = language === 'ml' ? currentSpice.ml : currentSpice.en;
 
   const [tableFilter, setTableFilter] = useState<'latest' | 'recent'>('latest');
 
@@ -55,18 +68,21 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
   // Combined Day Telemetry for Latest Date
   const dayStats = useMemo(() => {
     if (latestAuctions.length === 0) {
+      const fallbackAvg = summary?.latest_price?.avg_price || (isAuctionSpice ? 3183.43 : 330.0);
+      const fallbackPeak = summary?.latest_price?.max_price || (isAuctionSpice ? 3868.0 : Math.round(fallbackAvg * 1.08));
+      const fallbackFloor = summary?.latest_price?.min_price || (isAuctionSpice ? 2294.0 : Math.round(fallbackAvg * 0.92));
       return {
-        avgPrice: 3183.43,
-        peakPrice: 3868.0,
-        peakAuctioneer: 'IDUKKI Dist.TRADITIONAL CARDAMOM PRODUCER COMPANY Ltd',
-        floorPrice: 2294.0,
-        floorAuctioneer: 'IDUKKI Dist.TRADITIONAL CARDAMOM PRODUCER COMPANY Ltd',
-        totalArrivedKg: 186141.7,
-        totalSoldKg: 180926.9,
+        avgPrice: Math.round(fallbackAvg * 100) / 100,
+        peakPrice: Math.round(fallbackPeak * 100) / 100,
+        peakAuctioneer: isAuctionSpice ? 'Idukki Dist. Traditional Cardamom Producer Co.' : 'Kalpetta / Kochi Spot',
+        floorPrice: Math.round(fallbackFloor * 100) / 100,
+        floorAuctioneer: isAuctionSpice ? 'Idukki Dist. Traditional Cardamom Producer Co.' : 'Kalpetta / Kochi Spot',
+        totalArrivedKg: isAuctionSpice ? 186141.7 : 12250,
+        totalSoldKg: isAuctionSpice ? 180926.9 : 11280,
         clearancePct: 97.2,
-        totalLots: 547,
-        daySpread: 1574.0,
-        dayChangePct: -0.1,
+        totalLots: isAuctionSpice ? 547 : 0,
+        daySpread: Math.round((fallbackPeak - fallbackFloor) * 100) / 100,
+        dayChangePct: summary?.latest_price?.change_30d_pct || 0,
       };
     }
 
@@ -98,8 +114,10 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
       weightedSum += (avgVal * soldVal);
       totalSold += soldVal;
       totalArrived += arrVal;
-      // Estimate lots if not explicitly available (typical lot size ~ 250-400 kg)
-      totalLots += Math.round(arrVal / 350) || 270;
+      // Estimate lots only for auction spices (typical cardamom lot size ~ 250-400 kg)
+      if (isAuctionSpice) {
+        totalLots += Math.round(arrVal / 350) || 270;
+      }
     });
 
     const dayAvg = totalSold > 0 ? Math.round((weightedSum / totalSold) * 100) / 100 : Math.round(latestAuctions[0].avg_price);
@@ -142,12 +160,24 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
     const records = tableFilter === 'latest' ? latestAuctions : recentAuctions;
     if (records.length === 0) return;
 
-    const headers = ['Sno', 'Date of Auction', 'Auctioneer', 'Market Hub', 'Arrivals (kg)', 'Sold (kg)', 'Max Price', 'Min Price', 'Avg Price'];
+    const headers = [
+      'Sno',
+      'Date',
+      isAuctionSpice ? 'Auctioneer' : 'Trading Center / Market Hub',
+      'Market Hub',
+      ...(isAuctionSpice ? ['No. of Lots'] : []),
+      'Arrivals (kg)',
+      isAuctionSpice ? 'Sold (kg)' : 'Traded (kg)',
+      'Max Price',
+      'Min Price',
+      'Avg Price'
+    ];
     const rows = records.map((r, i) => [
       i + 1,
       r.date,
       `"${r.seller_or_auctioneer}"`,
       `"${r.market_name}"`,
+      ...(isAuctionSpice ? [Math.round(r.quantity_arrived / 350) || 270] : []),
       r.quantity_arrived,
       r.quantity_sold,
       r.max_price,
@@ -159,7 +189,7 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Cardo_Spices_Board_Auctions_${latestDate || 'latest'}.csv`);
+    link.setAttribute('download', `Cardo_Spices_Board_${spice}_${latestDate || 'latest'}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -169,7 +199,7 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
     return (
       <div className="py-24 flex flex-col items-center justify-center text-slate-400">
         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm">Fetching Latest Verified E-Auctions from Supabase Cloud...</p>
+        <p className="text-sm">Fetching Latest Verified Realizations for {spiceDisplayName}...</p>
       </div>
     );
   }
@@ -185,19 +215,21 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500 text-slate-950 flex items-center gap-1.5 shadow-sm">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{dTab.sessionBadge}</span>
+                <span>{isAuctionSpice ? dTab.sessionBadge : dTab.marketSessionBadge}</span>
               </span>
               <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-mono font-semibold text-white">{latestDate || '23-Sep-2026'}</span>
+                <span className="font-mono font-semibold text-white">{latestDate || (isAuctionSpice ? '23-Sep-2026' : '22-Sep-2026')}</span>
               </span>
             </div>
             
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-              {dTab.heroTitle}
+              {isAuctionSpice 
+                ? dTab.heroTitle 
+                : (language === 'ml' ? `${spiceDisplayName} ദിവസേനയുള്ള വിപണി വിവരങ്ങൾ` : `Daily ${spiceDisplayName} Market Realizations`)}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
-              {dTab.heroSubtitle}
+              {isAuctionSpice ? dTab.heroSubtitle : dTab.marketHeroSubtitle}
             </p>
           </div>
 
@@ -267,7 +299,7 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
             </div>
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-800/70 text-[11px] text-slate-400 truncate">
-            <span className="text-cyan-400 font-medium">{dayStats.peakAuctioneer || 'Certified Auctioneer'}</span>
+            <span className="text-cyan-400 font-medium">{dayStats.peakAuctioneer || (isAuctionSpice ? 'Certified Auctioneer' : 'Spot Market Center')}</span>
           </div>
         </div>
 
@@ -299,7 +331,7 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
           <div>
             <div className="flex justify-between items-start">
-              <span className="text-xs font-medium text-slate-400">{dTab.dayTotalVolume}</span>
+              <span className="text-xs font-medium text-slate-400">{isAuctionSpice ? dTab.dayTotalVolume : dTab.dayTradedVolume}</span>
               <div className="p-2 rounded-lg bg-blue-950/80 text-blue-400 border border-blue-800/50">
                 <Scale className="w-4 h-4" />
               </div>
@@ -313,25 +345,27 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
           </div>
           <div className="mt-3 pt-2.5 border-t border-slate-800/70 text-xs flex items-center justify-between">
             <span className="text-slate-300">
-              <strong className="text-emerald-400 font-semibold">{Math.round(dayStats.totalSoldKg / 100) / 10} MT</strong> Sold
+              <strong className="text-emerald-400 font-semibold">{Math.round(dayStats.totalSoldKg / 100) / 10} MT</strong> {isAuctionSpice ? 'Sold' : 'Traded'}
             </span>
-            <span className="text-emerald-400 font-bold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/40 text-[11px]">
-              {dayStats.clearancePct}% {dTab.clearance}
-            </span>
+            {isAuctionSpice && (
+              <span className="text-emerald-400 font-bold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/40 text-[11px]">
+                {dayStats.clearancePct}% {dTab.clearance}
+              </span>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Participating Auction Houses Spotlight Cards with Price Corridor */}
+      {/* Participating Auction Houses / Market Centers Spotlight Cards with Price Corridor */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-white flex items-center gap-2">
             <Building2 className="w-4 h-4 text-emerald-400" />
-            <span>{dTab.auctioneerCardsTitle}</span>
+            <span>{isAuctionSpice ? dTab.auctioneerCardsTitle : dTab.marketCentersTitle}</span>
             <span className="text-xs text-slate-400 font-normal">({latestDate})</span>
           </h2>
           <span className="text-xs text-slate-400 font-mono">
-            {latestAuctions.length} auctions conducted
+            {latestAuctions.length} {isAuctionSpice ? 'auctions conducted' : (language === 'ml' ? 'വിപണി വിവരങ്ങൾ' : 'market sessions recorded')}
           </span>
         </div>
 
@@ -346,7 +380,7 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
 
             return (
               <div 
-                key={auc.id || idx}
+                key={auc.id || idx} 
                 className="p-5 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800/90 hover:border-emerald-600/50 transition-all shadow-md space-y-4"
               >
                 {/* Header */}
@@ -372,25 +406,27 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
                 </div>
 
                 {/* Quantitative Volume Grid */}
-                <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/70 text-center text-xs">
+                <div className={`grid ${isAuctionSpice ? 'grid-cols-3' : 'grid-cols-2'} gap-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/70 text-center text-xs`}>
                   <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Arrivals</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">{language === 'ml' ? 'വരവ്' : 'Arrivals'}</span>
                     <span className="font-semibold text-white mt-0.5 block font-mono">
                       {auc.quantity_arrived?.toLocaleString()} <span className="text-[10px] text-slate-400 font-sans">kg</span>
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Sold</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">{language === 'ml' ? 'വില്പന' : (isAuctionSpice ? 'Sold' : 'Traded')}</span>
                     <span className="font-semibold text-emerald-400 mt-0.5 block font-mono">
                       {auc.quantity_sold?.toLocaleString()} <span className="text-[10px] text-slate-400 font-sans">kg</span>
                     </span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Clearance</span>
-                    <span className="font-semibold text-cyan-400 mt-0.5 block">
-                      {clearance}%
-                    </span>
-                  </div>
+                  {isAuctionSpice && (
+                    <div>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Clearance</span>
+                      <span className="font-semibold text-cyan-400 mt-0.5 block">
+                        {clearance}%
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Visual Price Corridor Spectrum */}
@@ -435,15 +471,19 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
         </div>
       </div>
 
-      {/* Official Spices Board Table View (Exact Mirror of Screenshot) */}
+      {/* Official Spices Board Table View */}
       <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              {dTab.tableTitle}
+              {isAuctionSpice 
+                ? dTab.tableTitle 
+                : (language === 'ml' ? `ARCHIVE - ${spiceDisplayName} ദിവസേനയുള്ള വിപണി നിരക്കുകൾ` : `ARCHIVE - DAILY MARKET PRICE OF ${spiceDisplayName.toUpperCase()}`)}
             </h3>
             <p className="text-xs text-slate-400">
-              Spices Board of India • Electronic Auction Realizations
+              {isAuctionSpice 
+                ? 'Spices Board of India • Electronic Auction Realizations'
+                : 'Spices Board of India • Physical & Spot Market Realizations'}
             </p>
           </div>
 
@@ -456,7 +496,7 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {dTab.toggleLatest} ({latestAuctions.length})
+              {isAuctionSpice ? dTab.toggleLatest : dTab.toggleLatestMarket} ({latestAuctions.length})
             </button>
             <button
               onClick={() => setTableFilter('recent')}
@@ -478,10 +518,10 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
               <tr>
                 <th className="py-3 px-3 text-center w-12">Sno</th>
                 <th className="py-3 px-3 text-center">{t.table.date}</th>
-                <th className="py-3 px-4">{t.table.auctioneer}</th>
-                <th className="py-3 px-3 text-center">No.of Lots</th>
+                <th className="py-3 px-4">{isAuctionSpice ? dTab.columnAuctioneer : dTab.columnMarketCenter}</th>
+                {isAuctionSpice && <th className="py-3 px-3 text-center">No.of Lots</th>}
                 <th className="py-3 px-3 text-right">Total Qty Arrived (Kgs)</th>
-                <th className="py-3 px-3 text-right">Qty Sold (Kgs)</th>
+                <th className="py-3 px-3 text-right">{isAuctionSpice ? 'Qty Sold (Kgs)' : 'Qty Traded (Kgs)'}</th>
                 <th className="py-3 px-3 text-right">MaxPrice (Rs./Kg)</th>
                 <th className="py-3 px-3 text-right">MinPrice (Rs./Kg)</th>
                 <th className="py-3 px-3 text-right">Avg.Price (Rs./Kg)</th>
@@ -502,10 +542,11 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
                   <td className="py-2.5 px-4 font-medium text-white">
                     {auc.seller_or_auctioneer}
                   </td>
-                  <td className="py-2.5 px-3 text-center font-mono text-slate-400">
-                    {/* Approximate lots if not provided in row */}
-                    {Math.round(auc.quantity_arrived / 350) || 270}
-                  </td>
+                  {isAuctionSpice && (
+                    <td className="py-2.5 px-3 text-center font-mono text-slate-400">
+                      {Math.round(auc.quantity_arrived / 350) || 270}
+                    </td>
+                  )}
                   <td className="py-2.5 px-3 text-right font-mono">
                     {auc.quantity_arrived?.toLocaleString()}
                   </td>

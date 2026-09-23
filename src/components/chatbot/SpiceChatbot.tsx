@@ -31,7 +31,34 @@ const INITIAL_SUGGESTIONS_ML = [
 
 export const SpiceChatbot: React.FC<SpiceChatbotProps> = ({ context, language = 'en', onNavigateTab }) => {
   const t = translations[language] || translations.en;
-  const initialSuggestions = language === 'ml' ? INITIAL_SUGGESTIONS_ML : INITIAL_SUGGESTIONS_EN;
+
+  const spiceNames: Record<string, { en: string; ml: string }> = {
+    small_cardamom: { en: 'Cardamom', ml: 'ഏലം' },
+    black_pepper: { en: 'Black Pepper', ml: 'കുരുമുളക്' },
+    nutmeg: { en: 'Nutmeg', ml: 'ജാതിക്ക' },
+    cloves: { en: 'Cloves', ml: 'ഗ്രാമ്പൂ' },
+  };
+  const curSpice = spiceNames[context.spice] || spiceNames.small_cardamom;
+
+  const initialSuggestions = React.useMemo(() => {
+    if (language === 'ml') {
+      return [
+        `ഇപ്പോഴത്തെ ${curSpice.ml} വില എത്രയാണ്?`,
+        "ഇടുക്കിയിലെ മഴ നിലവാരം എങ്ങനെയാണ്?",
+        `ഇടുക്കിയിലെ ${curSpice.ml} ഉത്പാദനം എത്രയാണ്?`,
+        "പ്രധാന കയറ്റുമതി രാജ്യങ്ങൾ ഏവ?",
+        "വണ്ടൻമേടും ബോഡിനായ്ക്കന്നൂരും തമ്മിലുള്ള വ്യത്യാസം?"
+      ];
+    }
+    return [
+      `What is the current ${curSpice.en.toLowerCase()} price?`,
+      "Compare Vandanmettu vs Bodinayakanur",
+      "Why did prices spike in 2019?",
+      "How is the monsoon rainfall right now?",
+      `How much ${curSpice.en.toLowerCase()} does Idukki produce?`,
+      `Where does India export ${curSpice.en.toLowerCase()} to?`
+    ];
+  }, [language, curSpice]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');

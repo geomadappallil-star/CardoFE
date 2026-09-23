@@ -43,6 +43,7 @@ export interface Translations {
   // Navigation Tabs
   tabs: {
     dailyAuction: string;
+    dailyMarket: string;
     overview: string;
     prices: string;
     weather: string;
@@ -56,22 +57,32 @@ export interface Translations {
   dailyAuctionTab: {
     heroTitle: string;
     heroSubtitle: string;
+    marketHeroTitle: string;
+    marketHeroSubtitle: string;
     sessionBadge: string;
+    marketSessionBadge: string;
     dayAvgPrice: string;
     dayPeakPrice: string;
     dayFloorPrice: string;
     dayTotalVolume: string;
+    dayTradedVolume: string;
     soldVolume: string;
     clearance: string;
     lots: string;
     priceSpread: string;
     auctioneerCardsTitle: string;
+    marketCentersTitle: string;
     priceCorridor: string;
     tableTitle: string;
+    marketTableTitle: string;
     toggleLatest: string;
+    toggleLatestMarket: string;
     toggleRecent: string;
     vsPrevDay: string;
     noAuctionsFound: string;
+    noMarketFound: string;
+    columnAuctioneer: string;
+    columnMarketCenter: string;
   };
 
   // Overview Tab
@@ -234,6 +245,7 @@ export const translations: Record<Language, Translations> = {
 
     tabs: {
       dailyAuction: 'Daily Auction Price',
+      dailyMarket: 'Daily Market Price',
       overview: 'Executive Overview',
       prices: 'Price Dynamics',
       weather: 'Monsoon & Climate',
@@ -246,22 +258,32 @@ export const translations: Record<Language, Translations> = {
     dailyAuctionTab: {
       heroTitle: 'Daily Small Cardamom E-Auction Realizations',
       heroSubtitle: 'Official certified auction results directly from Spices Board of India auction centers',
+      marketHeroTitle: 'Daily Market Realizations',
+      marketHeroSubtitle: 'Official domestic terminal & spot market price realisations directly from Spices Board of India',
       sessionBadge: 'Latest E-Auction Session',
+      marketSessionBadge: 'Latest Market Session',
       dayAvgPrice: 'Day Weighted Average',
       dayPeakPrice: 'Day Peak Price (Max)',
       dayFloorPrice: 'Day Floor Price (Min)',
       dayTotalVolume: 'Total Arrivals & Sold',
+      dayTradedVolume: 'Total Volume Traded',
       soldVolume: 'Sold Volume',
       clearance: 'Clearance Rate',
       lots: 'Lots',
       priceSpread: 'Price Spectrum',
       auctioneerCardsTitle: 'Participating Licensed Auction Houses',
+      marketCentersTitle: 'Active Trading Centers & Spot Markets',
       priceCorridor: 'Price Corridor',
       tableTitle: 'ARCHIVE - DAILY AUCTION PRICE OF SMALL CARDAMOM',
-      toggleLatest: 'Today\'s Auctions Only',
+      marketTableTitle: 'ARCHIVE - DAILY SPOT MARKET PRICES',
+      toggleLatest: "Today's Auctions Only",
+      toggleLatestMarket: "Today's Records Only",
       toggleRecent: 'Recent Sessions (Past 7 Days)',
-      vsPrevDay: 'vs previous auction',
+      vsPrevDay: 'vs previous session',
       noAuctionsFound: 'No auction records found for this date.',
+      noMarketFound: 'No market records found for this date.',
+      columnAuctioneer: 'Auctioneer',
+      columnMarketCenter: 'Trading Center / Market Hub',
     },
 
     overview: {
@@ -415,6 +437,7 @@ export const translations: Record<Language, Translations> = {
 
     tabs: {
       dailyAuction: 'ദിവസേനയുള്ള ലേലവില',
+      dailyMarket: 'ദിവസേനയുള്ള വിപണി വില',
       overview: 'പൊതുവിവരം',
       prices: 'വില നിലവാരം',
       weather: 'കാലാവസ്ഥ & മഴ',
@@ -427,22 +450,32 @@ export const translations: Record<Language, Translations> = {
     dailyAuctionTab: {
       heroTitle: 'ചെറിയ ഏലം ദിവസേനയുള്ള ലേല വിവരങ്ങൾ',
       heroSubtitle: 'സ്പൈസസ് ബോർഡ് ഓഫ് ഇന്ത്യ ഔദ്യോഗിക കേന്ദ്രങ്ങളിലെ തത്സമയ ലേല നിരക്കുകൾ',
+      marketHeroTitle: 'ദിവസേനയുള്ള വിപണി വിവരങ്ങൾ',
+      marketHeroSubtitle: 'സ്പൈസസ് ബോർഡ് ഓഫ് ഇന്ത്യ ഔദ്യോഗിക ടെർമിനൽ & സ്പോട്ട് മാർക്കറ്റ് നിരക്കുകൾ',
       sessionBadge: 'ഏറ്റവും പുതിയ ഇ-ലേലം',
+      marketSessionBadge: 'ഏറ്റവും പുതിയ വിപണി വിവരം',
       dayAvgPrice: 'ദിവസത്തെ ശരാശരി വില',
       dayPeakPrice: 'പരമാവധി വില (Peak)',
       dayFloorPrice: 'കുറഞ്ഞ വില (Floor)',
       dayTotalVolume: 'ആകെ വരവും വിറ്റതും',
+      dayTradedVolume: 'ആകെ വ്യാപാര അളവ്',
       soldVolume: 'വിറ്റ അളവ്',
       clearance: 'വിൽപന നിരക്ക്',
       lots: 'ലോട്ടുകൾ',
       priceSpread: 'വില വിസ്തൃതി',
       auctioneerCardsTitle: 'ലേലം നടത്തിയ ലൈസൻസുള്ള കമ്പനികൾ',
+      marketCentersTitle: 'പ്രവർത്തനക്ഷമമായ വിപണി കേന്ദ്രങ്ങൾ',
       priceCorridor: 'വില നിലവാരം',
-      tableTitle: 'ARCHIVE - DAILY AUCTION PRICE OF SMALL CARDAMOM',
+      tableTitle: 'ARCHIVE - ചെറിയ ഏലം ദിവസേനയുള്ള ലേലവില',
+      marketTableTitle: 'ARCHIVE - ദിവസേനയുള്ള സ്പോട്ട് വിപണി നിരക്കുകൾ',
       toggleLatest: 'ഇന്നത്തെ ലേലങ്ങൾ മാത്രം',
-      toggleRecent: 'സമീപകാല ലേലങ്ങൾ (കഴിഞ്ഞ 7 ദിവസം)',
-      vsPrevDay: 'മുമ്പത്തെ ലേലവുമായി താരതമ്യം',
+      toggleLatestMarket: 'ഇന്നത്തെ വിവരങ്ങൾ മാത്രം',
+      toggleRecent: 'സമീപകാല വിവരങ്ങൾ (കഴിഞ്ഞ 7 ദിവസം)',
+      vsPrevDay: 'മുമ്പത്തെ നിരക്കുമായി താരതമ്യം',
       noAuctionsFound: 'ഈ തീയതിയിൽ ലേല വിവരങ്ങൾ ലഭ്യമല്ല.',
+      noMarketFound: 'ഈ തീയതിയിൽ വിപണി വിവരങ്ങൾ ലഭ്യമല്ല.',
+      columnAuctioneer: 'ലേലം നടത്തുന്നവർ',
+      columnMarketCenter: 'വിപണി കേന്ദ്രം',
     },
 
     overview: {

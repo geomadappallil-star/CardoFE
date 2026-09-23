@@ -9,6 +9,7 @@ import { Language, translations } from '../../i18n/translations.js';
 
 interface WeatherTabProps {
   weatherData: WeatherPoint[];
+  spice?: string;
   scope?: string;
   frequency?: string;
   language?: Language;
@@ -17,6 +18,7 @@ interface WeatherTabProps {
 
 export const WeatherTab: React.FC<WeatherTabProps> = ({
   weatherData,
+  spice = 'small_cardamom',
   scope = 'all',
   frequency = 'monthly',
   language = 'en',
@@ -62,12 +64,12 @@ export const WeatherTab: React.FC<WeatherTabProps> = ({
           normal: '~3,050 mm',
           normalSub: '1991-2020 Climatological Annual Normal',
           events: 'Aug 2018 Flood & 2023 Drought Stress',
-          eventsSub: 'Directly drove cardamom price volatility',
+          eventsSub: spice === 'small_cardamom' ? 'Directly drove cardamom price volatility' : 'Directly drove spice yield & price volatility',
           temp: '14.5°C — 28.5°C',
-          tempSub: 'Cardamom Hill Reserve (1,000m - 1,400m MSL)',
+          tempSub: spice === 'small_cardamom' ? 'Cardamom Hill Reserve (1,000m - 1,400m MSL)' : 'Highland Spice Agro-Climatic Belt (800m - 1,400m MSL)',
         };
     }
-  }, [scope]);
+  }, [scope, spice]);
 
   const chartMinWidth = useMemo(() => {
     if (!weatherData || weatherData.length === 0) return 1000;
