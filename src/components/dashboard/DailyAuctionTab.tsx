@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { 
   CheckCircle2, DollarSign, TrendingUp, TrendingDown, Scale, 
   ArrowUp, ArrowDown, Calendar, Layers, Download, ArrowUpRight,
-  Sparkles, ShieldCheck, MapPin, Building2, BarChart2
+  Sparkles, ShieldCheck, MapPin, Building2, BarChart2, CloudRain,
+  Sprout, Ship, ArrowRight, LayoutDashboard
 } from 'lucide-react';
 import { DashboardSummary, PriceFact } from '../../types/index.js';
 import { Language, translations } from '../../i18n/translations.js';
@@ -24,6 +25,7 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
 }) => {
   const t = translations[language] || translations.en;
   const dTab = t.dailyAuctionTab;
+  const exp = t.exploreDashboards;
 
   const spiceNames: Record<string, { en: string; ml: string }> = {
     small_cardamom: { en: 'Small Cardamom', ml: 'ചെറിയ ഏലം' },
@@ -566,6 +568,115 @@ export const DailyAuctionTab: React.FC<DailyAuctionTabProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Navigation Gateway to Rest of the Dashboards */}
+      <div className="pt-6 border-t border-slate-800/80 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <LayoutDashboard className="w-5 h-5 text-emerald-400" />
+              <span>{exp.title}</span>
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {exp.subtitle}
+            </p>
+          </div>
+          <span className="self-start sm:self-auto px-2.5 py-1 text-[11px] font-semibold rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/60 shrink-0">
+            {exp.modulesBadge}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {[
+            {
+              id: 'overview',
+              title: exp.overviewTitle,
+              description: exp.overviewDesc,
+              icon: BarChart2,
+              badge: 'Macro Telemetry',
+              accentColor: 'text-emerald-400 bg-emerald-950/70 border-emerald-800/60',
+            },
+            {
+              id: 'prices',
+              title: exp.pricesTitle,
+              description: exp.pricesDesc,
+              icon: TrendingUp,
+              badge: 'Time-Series',
+              accentColor: 'text-cyan-400 bg-cyan-950/70 border-cyan-800/60',
+            },
+            {
+              id: 'weather',
+              title: exp.weatherTitle,
+              description: exp.weatherDesc,
+              icon: CloudRain,
+              badge: 'ERA5 Satellite',
+              accentColor: 'text-sky-400 bg-sky-950/70 border-sky-800/60',
+            },
+            {
+              id: 'production',
+              title: exp.productionTitle,
+              description: exp.productionDesc,
+              icon: Sprout,
+              badge: 'DES India',
+              accentColor: 'text-lime-400 bg-lime-950/70 border-lime-800/60',
+            },
+            {
+              id: 'trade',
+              title: exp.tradeTitle,
+              description: exp.tradeDesc,
+              icon: Ship,
+              badge: 'UN Comtrade',
+              accentColor: 'text-amber-400 bg-amber-950/70 border-amber-800/60',
+            },
+            {
+              id: 'extrapolations',
+              title: exp.extrapolationsTitle,
+              description: exp.extrapolationsDesc,
+              icon: Sparkles,
+              badge: 'Algorithmic',
+              accentColor: 'text-purple-400 bg-purple-950/70 border-purple-800/60',
+            },
+            {
+              id: 'provenance',
+              title: exp.provenanceTitle,
+              description: exp.provenanceDesc,
+              icon: ShieldCheck,
+              badge: '100% Verified',
+              accentColor: 'text-emerald-400 bg-emerald-950/70 border-emerald-800/60',
+            },
+          ].map(card => {
+            const Icon = card.icon;
+            return (
+              <button
+                key={card.id}
+                onClick={() => onNavigateTab(card.id)}
+                className="group p-4 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 hover:border-emerald-500/50 transition-all text-left flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className={`p-2 rounded-lg border ${card.accentColor} group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                      {card.badge}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                    {card.description}
+                  </p>
+                </div>
+                <div className="mt-3.5 pt-2.5 border-t border-slate-800/60 flex items-center justify-between text-xs font-medium text-slate-400 group-hover:text-emerald-400 transition-colors">
+                  <span>{exp.exploreBtn} {card.title}</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

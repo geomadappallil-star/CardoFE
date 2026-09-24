@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, RefreshCw, Layers, MapPin, Calendar, Sparkles, Languages, ChevronDown, Check } from 'lucide-react';
+import { 
+  Download, RefreshCw, Layers, MapPin, Calendar, Sparkles, 
+  Languages, ChevronDown, Check, Sun, Moon, Monitor 
+} from 'lucide-react';
 import { Language, translations } from '../../i18n/translations.js';
 
 interface NavbarProps {
@@ -18,6 +21,8 @@ interface NavbarProps {
   onRefresh: () => void;
   language: Language;
   setLanguage: (l: Language) => void;
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (t: 'light' | 'dark' | 'system') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -35,7 +40,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   refreshing,
   onRefresh,
   language,
-  setLanguage
+  setLanguage,
+  theme,
+  setTheme
 }) => {
   const t = translations[language];
 
@@ -118,23 +125,123 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Top Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white text-sm sm:text-base shadow-lg shadow-emerald-600/30 shrink-0">
-              CB
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-bold text-base sm:text-lg tracking-tight text-white">{t.appName}</span>
-                <span className="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-                  v1.3
-                </span>
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white text-sm sm:text-base shadow-lg shadow-emerald-600/30 shrink-0">
+                CB
               </div>
-              <p className="hidden sm:block text-xs text-slate-400">{t.appSubtitle}</p>
+              <div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="font-bold text-base sm:text-lg tracking-tight text-white">{t.appName}</span>
+                  <span className="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                    v1.3
+                  </span>
+                </div>
+                <p className="hidden md:block text-[11px] text-slate-400">{t.appSubtitle}</p>
+              </div>
+            </div>
+
+            {/* Top Bar Spice Selector Dropdown - Always accessible */}
+            <div className="relative shrink-0" ref={spiceRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSpiceOpen(!isSpiceOpen);
+                  setIsScopeOpen(false);
+                }}
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-emerald-500/60 transition-all text-xs font-medium shadow-sm group focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                aria-expanded={isSpiceOpen}
+              >
+                <div className="p-1 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-800/60 group-hover:scale-105 transition-transform">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-semibold text-emerald-300 text-xs sm:text-sm">{currentSpice.name}</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isSpiceOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+              </button>
+
+              {isSpiceOpen && (
+                <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl bg-slate-900 border border-slate-700/90 shadow-2xl shadow-black/90 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 backdrop-blur-lg">
+                  <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1">
+                    {language === 'ml' ? 'സുഗന്ധവ്യഞ്ജനം തിരഞ്ഞെടുക്കുക' : 'Select Spice'}
+                  </div>
+                  {spices.map(s => (
+                    <button
+                      key={s.code}
+                      type="button"
+                      onClick={() => {
+                        setSpice(s.code);
+                        setIsSpiceOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
+                        spice === s.code
+                          ? 'bg-emerald-950/70 text-emerald-300 font-semibold border-l-2 border-emerald-500'
+                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium text-white">{s.name}</div>
+                        {s.badge && (
+                          <div className="text-[10px] text-slate-400 font-normal">
+                            {s.badge}
+                          </div>
+                        )}
+                      </div>
+                      {spice === s.code && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Quick Actions & Language Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Quick Actions, 3-Theme Toggle & Language Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* 3-Theme Options Toggle */}
+            <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setTheme('light')}
+                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                  theme === 'light'
+                    ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title={language === 'ml' ? 'ലൈറ്റ് തീം' : 'Light Theme'}
+                aria-label="Light Theme"
+              >
+                <Sun className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">{t.theme?.light || 'Light'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme('dark')}
+                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                  theme === 'dark'
+                    ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title={language === 'ml' ? 'ഡാർക്ക് തീം' : 'Dark Theme'}
+                aria-label="Dark Theme"
+              >
+                <Moon className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">{t.theme?.dark || 'Dark'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTheme('system')}
+                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                  theme === 'system'
+                    ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title={language === 'ml' ? 'സിസ്റ്റം തീം' : 'System Theme'}
+                aria-label="System Theme"
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">{t.theme?.system || 'System'}</span>
+              </button>
+            </div>
+
             {/* Seamless Language Toggle */}
             <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-medium">
               <button
@@ -175,161 +282,110 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>{t.export}</span>
+              <span className="hidden sm:inline">{t.export}</span>
             </button>
           </div>
         </div>
 
-        {/* Global Filter Bar - Sleek Custom Dropdowns */}
-        <div className="py-2 border-t border-slate-800/80 overflow-visible flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-4 text-xs whitespace-nowrap">
-          {/* Custom Spice Selector Dropdown */}
-          <div className="relative shrink-0" ref={spiceRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsSpiceOpen(!isSpiceOpen);
-                setIsScopeOpen(false);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-emerald-500/60 transition-all text-xs font-medium shadow-sm group focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              aria-expanded={isSpiceOpen}
-            >
-              <div className="p-1 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-800/60 group-hover:scale-105 transition-transform">
-                <Layers className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-slate-400 hidden xs:inline">{language === 'ml' ? 'ഇനം:' : 'Spice:'}</span>
-              <span className="font-semibold text-emerald-300">{currentSpice.name}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isSpiceOpen ? 'rotate-180 text-emerald-400' : ''}`} />
-            </button>
-
-            {isSpiceOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl bg-slate-900 border border-slate-700/90 shadow-2xl shadow-black/90 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 backdrop-blur-lg">
-                <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1">
-                  {language === 'ml' ? 'സുഗന്ധവ്യഞ്ജനം തിരഞ്ഞെടുക്കുക' : 'Select Spice'}
+        {/* Global Filter Bar - Completely hidden on Daily Auction landing page */}
+        {activeTab !== 'daily_auction' && (
+          <div className="py-2 border-t border-slate-800/80 overflow-visible flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-4 text-xs whitespace-nowrap animate-in fade-in duration-200">
+            {/* Custom Scope Selector Dropdown */}
+            <div className="relative shrink-0" ref={scopeRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsScopeOpen(!isScopeOpen);
+                  setIsSpiceOpen(false);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-sky-500/60 transition-all text-xs font-medium shadow-sm group focus:outline-none focus:ring-1 focus:ring-sky-500"
+                aria-expanded={isScopeOpen}
+              >
+                <div className="p-1 rounded-md bg-sky-950 text-sky-400 border border-sky-800/60 group-hover:scale-105 transition-transform">
+                  <MapPin className="w-3.5 h-3.5" />
                 </div>
-                {spices.map(s => (
+                <span className="text-slate-400 hidden xs:inline">{language === 'ml' ? 'മേഖല:' : 'Scope:'}</span>
+                <span className="font-semibold text-sky-300">{currentScope.label}</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isScopeOpen ? 'rotate-180 text-sky-400' : ''}`} />
+              </button>
+
+              {isScopeOpen && (
+                <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl bg-slate-900 border border-slate-700/90 shadow-2xl shadow-black/90 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 backdrop-blur-lg">
+                  <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1">
+                    {language === 'ml' ? 'മേഖല തിരഞ്ഞെടുക്കുക' : 'Select Geographic Scope'}
+                  </div>
+                  {scopes.map(sc => (
+                    <button
+                      key={sc.code}
+                      type="button"
+                      onClick={() => {
+                        setScope(sc.code);
+                        setIsScopeOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
+                        scope === sc.code
+                          ? 'bg-sky-950/70 text-sky-300 font-semibold border-l-2 border-sky-500'
+                          : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                      }`}
+                    >
+                      <div>
+                        <div className="font-medium text-white">{sc.label}</div>
+                        {sc.badge && (
+                          <div className="text-[10px] text-slate-400 font-normal">
+                            {sc.badge}
+                          </div>
+                        )}
+                      </div>
+                      {scope === sc.code && <Check className="w-3.5 h-3.5 text-sky-400 shrink-0 ml-2" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Date Presets (Timeframe) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
+                <Calendar className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'കാലയളവ്:' : 'Range:'}
+              </span>
+              <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                {presets.map(p => (
                   <button
-                    key={s.code}
-                    type="button"
-                    onClick={() => {
-                      setSpice(s.code);
-                      setIsSpiceOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
-                      spice === s.code
-                        ? 'bg-emerald-950/70 text-emerald-300 font-semibold border-l-2 border-emerald-500'
-                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    key={p.code}
+                    onClick={() => setDateRangePreset(p.code)}
+                    className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
+                      dateRangePreset === p.code
+                        ? 'bg-slate-700 text-white font-medium shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <div>
-                      <div className="font-medium text-white">{s.name}</div>
-                      {s.badge && (
-                        <div className="text-[10px] text-slate-400 font-normal">
-                          {s.badge}
-                        </div>
-                      )}
-                    </div>
-                    {spice === s.code && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />}
+                    {p.label}
                   </button>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Custom Scope Selector Dropdown */}
-          <div className="relative shrink-0" ref={scopeRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsScopeOpen(!isScopeOpen);
-                setIsSpiceOpen(false);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-sky-500/60 transition-all text-xs font-medium shadow-sm group focus:outline-none focus:ring-1 focus:ring-sky-500"
-              aria-expanded={isScopeOpen}
-            >
-              <div className="p-1 rounded-md bg-sky-950 text-sky-400 border border-sky-800/60 group-hover:scale-105 transition-transform">
-                <MapPin className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-slate-400 hidden xs:inline">{language === 'ml' ? 'മേഖല:' : 'Scope:'}</span>
-              <span className="font-semibold text-sky-300">{currentScope.label}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isScopeOpen ? 'rotate-180 text-sky-400' : ''}`} />
-            </button>
-
-            {isScopeOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-60 rounded-xl bg-slate-900 border border-slate-700/90 shadow-2xl shadow-black/90 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 backdrop-blur-lg">
-                <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1">
-                  {language === 'ml' ? 'മേഖല തിരഞ്ഞെടുക്കുക' : 'Select Geographic Scope'}
-                </div>
-                {scopes.map(sc => (
+            {/* Frequency */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-slate-400 font-medium text-[11px] sm:text-xs">{language === 'ml' ? 'തരം:' : 'Freq:'}</span>
+              <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                {frequencies.map(f => (
                   <button
-                    key={sc.code}
-                    type="button"
-                    onClick={() => {
-                      setScope(sc.code);
-                      setIsScopeOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
-                      scope === sc.code
-                        ? 'bg-sky-950/70 text-sky-300 font-semibold border-l-2 border-sky-500'
-                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    key={f.code}
+                    onClick={() => setFrequency(f.code)}
+                    className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
+                      frequency === f.code
+                        ? 'bg-slate-700 text-white font-medium'
+                        : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <div>
-                      <div className="font-medium text-white">{sc.label}</div>
-                      {sc.badge && (
-                        <div className="text-[10px] text-slate-400 font-normal">
-                          {sc.badge}
-                        </div>
-                      )}
-                    </div>
-                    {scope === sc.code && <Check className="w-3.5 h-3.5 text-sky-400 shrink-0 ml-2" />}
+                    {f.label}
                   </button>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* Date Presets (Timeframe) */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-slate-400 flex items-center gap-1 font-medium text-[11px] sm:text-xs">
-              <Calendar className="w-3.5 h-3.5 text-emerald-400" /> {language === 'ml' ? 'കാലയളവ്:' : 'Range:'}
-            </span>
-            <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-              {presets.map(p => (
-                <button
-                  key={p.code}
-                  onClick={() => setDateRangePreset(p.code)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
-                    dateRangePreset === p.code
-                      ? 'bg-slate-700 text-white font-medium shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
             </div>
           </div>
-
-          {/* Frequency */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-slate-400 font-medium text-[11px] sm:text-xs">{language === 'ml' ? 'തരം:' : 'Freq:'}</span>
-            <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
-              {frequencies.map(f => (
-                <button
-                  key={f.code}
-                  onClick={() => setFrequency(f.code)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs transition-all ${
-                    frequency === f.code
-                      ? 'bg-slate-700 text-white font-medium'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Navigation Tabs - Horizontally scrollable on mobile */}
         <div className="flex border-t border-slate-800 overflow-x-auto no-scrollbar">

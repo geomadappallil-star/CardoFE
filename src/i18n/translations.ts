@@ -6,6 +6,31 @@ export interface Translations {
   export: string;
   refresh: string;
   language: string;
+  theme: {
+    light: string;
+    dark: string;
+    system: string;
+  };
+  exploreDashboards: {
+    title: string;
+    subtitle: string;
+    modulesBadge: string;
+    exploreBtn: string;
+    overviewTitle: string;
+    overviewDesc: string;
+    pricesTitle: string;
+    pricesDesc: string;
+    weatherTitle: string;
+    weatherDesc: string;
+    productionTitle: string;
+    productionDesc: string;
+    tradeTitle: string;
+    tradeDesc: string;
+    extrapolationsTitle: string;
+    extrapolationsDesc: string;
+    provenanceTitle: string;
+    provenanceDesc: string;
+  };
   
   // Spices
   spices: {
@@ -213,6 +238,31 @@ export const translations: Record<Language, Translations> = {
     export: 'Export',
     refresh: 'Refresh',
     language: 'Language',
+    theme: {
+      light: 'Light',
+      dark: 'Dark',
+      system: 'System',
+    },
+    exploreDashboards: {
+      title: 'Explore Comprehensive Market Dashboards',
+      subtitle: 'Dive deeper into multi-year price analytics, satellite climate models, production statistics, and trade flows',
+      modulesBadge: '7 Analytical Modules',
+      exploreBtn: 'Explore',
+      overviewTitle: 'Executive Overview',
+      overviewDesc: 'Macroeconomic synthesis, price momentum, 30-day volatility index, and climate summaries.',
+      pricesTitle: 'Price Trends & Spreads',
+      pricesDesc: 'Historical auction price series, quantity-weighted curves, seasonal distribution, and market spreads.',
+      weatherTitle: 'Weather & Climatology',
+      weatherDesc: 'Western Ghats rainfall anomalies, ERA5 gridded stations, soil moisture, and dry-spell risk.',
+      productionTitle: 'Cultivation & Yield',
+      productionDesc: 'Directorate of Economics & Statistics (DES) harvest volumes, district shares, and crop calendars.',
+      tradeTitle: 'Bilateral Trade & Exports',
+      tradeDesc: 'UN Comtrade export corridors, traditional Gulf (Gahwa) demand, and FOB realization benchmarks.',
+      extrapolationsTitle: 'Scenario Models & Forecasts',
+      extrapolationsDesc: 'Interactive supply, demand, and climate shock simulations with 12-month confidence envelopes.',
+      provenanceTitle: 'Data Provenance & Integrity',
+      provenanceDesc: 'Official sources (Spices Board of India, IMD, DES), verification assertions, and daily ETL pipeline.',
+    },
 
     spices: {
       small_cardamom: 'Small Cardamom',
@@ -405,6 +455,31 @@ export const translations: Record<Language, Translations> = {
     export: 'ഡൗൺലോഡ്',
     refresh: 'പുതുക്കുക',
     language: 'ഭാഷ',
+    theme: {
+      light: 'ലൈറ്റ്',
+      dark: 'ഡാർക്ക്',
+      system: 'സിസ്റ്റം',
+    },
+    exploreDashboards: {
+      title: 'കൂടുതൽ സമഗ്ര ഡാഷ്‌ബോർഡുകൾ പരിശോധിക്കുക',
+      subtitle: 'ദീർഘകാല വിലനിലവാരം, കാലാവസ്ഥാ സൂചികകൾ, ഉത്പാദനം, കയറ്റുമതി വിശകലനങ്ങൾ എന്നിവ കാണുക',
+      modulesBadge: '7 വിശകലന വിഭാഗങ്ങൾ',
+      exploreBtn: 'തുറക്കുക',
+      overviewTitle: 'സമഗ്ര അവലോകനം',
+      overviewDesc: 'വിപണി സൂചികകൾ, വില വ്യതിയാനങ്ങൾ, 30-ദിന അസ്ഥിരത, കാലാവസ്ഥ സംഗ്രഹം.',
+      pricesTitle: 'വിലനിലവാര ചരിത്രം',
+      pricesDesc: 'ലേല വിലകളുടെ മുൻകാല ചരിത്രം, തൂക്കമനുസരിച്ചുള്ള വില, സീസണൽ നിരക്കുകൾ.',
+      weatherTitle: 'കാലാവസ്ഥാ നിരീക്ഷണം',
+      weatherDesc: 'പശ്ചിമഘട്ട മഴക്കണക്കുകൾ, ഉപഗ്രഹ നിരീക്ഷണം, മണ്ണിലെ ഈർപ്പം, വരൾച്ചാ സാധ്യത.',
+      productionTitle: 'ഉത്പാദന കണക്കുകൾ',
+      productionDesc: 'ഡിപ്പാർട്ട്മെന്റ് ഓഫ് ഇക്കണോമിക്സ് & സ്റ്റാറ്റിസ്റ്റിക്സ് വിളവെടുപ്പ് വിവരങ്ങൾ, വിളവിസ്തൃതി.',
+      tradeTitle: 'കയറ്റുമതി വിവരങ്ങൾ',
+      tradeDesc: 'യു.എൻ കോംട്രേഡ് വഴിയുള്ള അന്താരാഷ്ട്ര വ്യാപാര വിവരങ്ങൾ, ഗൾഫ് ഡിമാൻഡ്, എഫ്.ഒ.ബി നിരക്കുകൾ.',
+      extrapolationsTitle: 'പ്രവചന മാതൃകകൾ',
+      extrapolationsDesc: 'വരൾച്ച, ഉത്പാദന വർദ്ധനവ് എന്നിവ അടിസ്ഥാനമാക്കിയുള്ള 12-മാസ ഭാവി വില പ്രവചനം.',
+      provenanceTitle: 'വിവര ഉറവിടങ്ങൾ',
+      provenanceDesc: 'സ്പൈസസ് ബോർഡ്, ഐ.എം.ഡി, ഡി.ഇ.എസ് എന്നിവയിൽ നിന്നുള്ള ഔദ്യോഗിക വിവരങ്ങൾ.',
+    },
 
     spices: {
       small_cardamom: 'ഏലം',

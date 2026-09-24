@@ -21,6 +21,8 @@ import {
 import { Language, translations } from './i18n/translations.js';
 import { logVisitorEvent } from './api/visitorTracker.js';
 
+export type Theme = 'light' | 'dark' | 'system';
+
 export function App() {
   const searchParams = new URLSearchParams(window.location.search);
   const [spice, setSpice] = useState(searchParams.get('spice') || 'small_cardamom');
@@ -29,6 +31,48 @@ export function App() {
   const [frequency, setFrequency] = useState(searchParams.get('frequency') || 'monthly');
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'daily_auction');
   
+  // Theme state: defaults to 'light' (lighter theme requested by user)
+  const [theme, setTheme] = useState<Theme>(() => {
+    const urlTheme = searchParams.get('theme') as Theme;
+    if (urlTheme === 'light' || urlTheme === 'dark' || urlTheme === 'system') return urlTheme;
+    const stored = localStorage.getItem('cardo_theme') as Theme;
+    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
+    return 'light';
+  });
+
+  const handleThemeChange = (t: Theme) => {
+    setTheme(t);
+    localStorage.setItem('cardo_theme', t);
+  };
+
+  // Sync theme with DOM documentElement
+  useEffect(() => {
+    const root = document.documentElement;
+    const applyTheme = (resolvedTheme: 'light' | 'dark') => {
+      root.setAttribute('data-theme', resolvedTheme);
+      if (resolvedTheme === 'dark') {
+        root.classList.add('dark');
+        root.classList.remove('light');
+      } else {
+        root.classList.add('light');
+        root.classList.remove('dark');
+      }
+    };
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(mediaQuery.matches ? 'dark' : 'light');
+
+      const listener = (e: MediaQueryListEvent) => {
+        applyTheme(e.matches ? 'dark' : 'light');
+      };
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    } else {
+      applyTheme(theme);
+    }
+  }, [theme]);
+
   const [language, setLanguage] = useState<Language>(() => {
     const urlLang = searchParams.get('lang') as Language;
     if (urlLang === 'en' || urlLang === 'ml') return urlLang;
@@ -147,6 +191,8 @@ export function App() {
         onRefresh={handleRefresh}
         language={language}
         setLanguage={handleLanguageChange}
+        theme={theme}
+        setTheme={handleThemeChange}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
