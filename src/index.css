@@ -15,6 +15,15 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Hide scrollbars for clean horizontal tab swiping */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* ========================================================
    LIGHT THEME (Default: Crisp Modern Emerald Day)
    ======================================================== */

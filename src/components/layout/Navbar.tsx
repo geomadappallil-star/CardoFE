@@ -49,14 +49,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isSpiceOpen, setIsSpiceOpen] = useState(false);
   const [isScopeOpen, setIsScopeOpen] = useState(false);
   const spiceRef = useRef<HTMLDivElement>(null);
+  const spiceMobileRef = useRef<HTMLDivElement>(null);
   const scopeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (spiceRef.current && !spiceRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const clickedOutsideSpice = (!spiceRef.current || !spiceRef.current.contains(target)) &&
+                                  (!spiceMobileRef.current || !spiceMobileRef.current.contains(target));
+      if (clickedOutsideSpice) {
         setIsSpiceOpen(false);
       }
-      if (scopeRef.current && !scopeRef.current.contains(e.target as Node)) {
+      if (scopeRef.current && !scopeRef.current.contains(target)) {
         setIsScopeOpen(false);
       }
     };
@@ -125,15 +129,16 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Top Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+          {/* Left: Brand + Desktop Spice Selector */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white text-sm sm:text-base shadow-lg shadow-emerald-600/30 shrink-0">
                 CB
               </div>
               <div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="font-bold text-base sm:text-lg tracking-tight text-white">{t.appName}</span>
-                  <span className="px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <span className="font-bold text-sm sm:text-lg tracking-tight text-white">{t.appName}</span>
+                  <span className="px-1.5 py-0.5 text-[9px] sm:text-xs font-semibold rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
                     v1.3
                   </span>
                 </div>
@@ -141,8 +146,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Top Bar Spice Selector Dropdown - Always accessible */}
-            <div className="relative shrink-0" ref={spiceRef}>
+            {/* Desktop Spice Selector Dropdown (Hidden on Mobile) */}
+            <div className="relative shrink-0 hidden sm:block" ref={spiceRef}>
               <button
                 type="button"
                 onClick={() => {
@@ -194,14 +199,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Quick Actions, 3-Theme Toggle & Language Toggle */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* 3-Theme Options Toggle */}
+          {/* Right Controls: 3-Theme Toggle, Language Toggle, Actions */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {/* 3-Theme Options Toggle (Sleek and compact on mobile) */}
             <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setTheme('light')}
-                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                className={`p-1.5 sm:px-2 sm:py-1 rounded transition-all flex items-center gap-1 ${
                   theme === 'light'
                     ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -215,7 +220,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => setTheme('dark')}
-                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                className={`p-1.5 sm:px-2 sm:py-1 rounded transition-all flex items-center gap-1 ${
                   theme === 'dark'
                     ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -229,7 +234,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => setTheme('system')}
-                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                className={`p-1.5 sm:px-2 sm:py-1 rounded transition-all flex items-center gap-1 ${
                   theme === 'system'
                     ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -242,11 +247,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
 
-            {/* Seamless Language Toggle */}
+            {/* Language Toggle (Compact on mobile) */}
             <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs font-medium">
               <button
                 onClick={() => setLanguage('en')}
-                className={`px-2 py-1 rounded transition-all flex items-center gap-1 ${
+                className={`px-1.5 sm:px-2 py-1 rounded transition-all flex items-center gap-1 text-[11px] sm:text-xs ${
                   language === 'en'
                     ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -257,7 +262,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
               <button
                 onClick={() => setLanguage('ml')}
-                className={`px-2.5 py-1 rounded transition-all flex items-center gap-1 ${
+                className={`px-1.5 sm:px-2.5 py-1 rounded transition-all flex items-center gap-1 text-[11px] sm:text-xs ${
                   language === 'ml'
                     ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -268,22 +273,85 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
 
+            {/* Refresh Button */}
             <button
               onClick={onRefresh}
               className={`p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors ${
                 refreshing ? 'animate-spin text-emerald-400' : ''
               }`}
               title={t.refresh}
+              aria-label="Refresh data"
             >
               <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
+
+            {/* Desktop Export Button */}
             <button
               onClick={onExport}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
+              className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">{t.export}</span>
+              <span>{t.export}</span>
             </button>
+          </div>
+        </div>
+
+        {/* Dedicated Mobile Spice Selector Bar (Only on Mobile, zero overlap with tabs) */}
+        <div className="sm:hidden pb-2.5 pt-0.5" ref={spiceMobileRef}>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSpiceOpen(!isSpiceOpen);
+                setIsScopeOpen(false);
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white border border-slate-700/80 hover:border-emerald-500/60 transition-all text-xs font-medium shadow-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              aria-expanded={isSpiceOpen}
+            >
+              <div className="flex items-center gap-2 truncate">
+                <div className="p-1 rounded-md bg-emerald-950 text-emerald-400 border border-emerald-800/60 shrink-0">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-semibold text-emerald-300 text-xs truncate">{currentSpice.name}</span>
+                {currentSpice.badge && (
+                  <span className="text-[10px] text-slate-400 font-normal truncate">({currentSpice.badge})</span>
+                )}
+              </div>
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isSpiceOpen ? 'rotate-180 text-emerald-400' : ''}`} />
+            </button>
+
+            {isSpiceOpen && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl bg-slate-900 border border-slate-700/90 shadow-2xl shadow-black/90 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 backdrop-blur-lg">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800 mb-1">
+                  {language === 'ml' ? 'സുഗന്ധവ്യഞ്ജനം തിരഞ്ഞെടുക്കുക' : 'Select Spice'}
+                </div>
+                {spices.map(s => (
+                  <button
+                    key={s.code}
+                    type="button"
+                    onClick={() => {
+                      setSpice(s.code);
+                      setIsSpiceOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
+                      spice === s.code
+                        ? 'bg-emerald-950/70 text-emerald-300 font-semibold border-l-2 border-emerald-500'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    }`}
+                  >
+                    <div>
+                      <div className="font-medium text-white">{s.name}</div>
+                      {s.badge && (
+                        <div className="text-[10px] text-slate-400 font-normal">
+                          {s.badge}
+                        </div>
+                      )}
+                    </div>
+                    {spice === s.code && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-2" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
