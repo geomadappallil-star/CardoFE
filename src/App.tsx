@@ -20,6 +20,9 @@ import {
 } from './types/index.js';
 import { Language, translations } from './i18n/translations.js';
 import { logVisitorEvent } from './api/visitorTracker.js';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -70,6 +73,16 @@ export function App() {
       return () => mediaQuery.removeEventListener('change', listener);
     } else {
       applyTheme(theme);
+    }
+  }, [theme]);
+
+  // Sync native mobile status bar and dismiss splash screen on mobile devices
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      SplashScreen.hide().catch(() => {});
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: isDark ? '#020617' : '#f8fafc' }).catch(() => {});
     }
   }, [theme]);
 
