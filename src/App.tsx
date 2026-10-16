@@ -21,8 +21,6 @@ import {
 import { Language, translations } from './i18n/translations.js';
 import { logVisitorEvent } from './api/visitorTracker.js';
 import { Capacitor } from '@capacitor/core';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { SplashScreen } from '@capacitor/splash-screen';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -76,13 +74,18 @@ export function App() {
     }
   }, [theme]);
 
-  // Sync native mobile status bar and dismiss splash screen on mobile devices
+  // Sync native mobile status bar and dismiss splash screen on native devices only
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      SplashScreen.hide().catch(() => {});
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
-      StatusBar.setBackgroundColor({ color: isDark ? '#020617' : '#f8fafc' }).catch(() => {});
+      import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+        SplashScreen.hide().catch(() => {});
+      }).catch(() => {});
+
+      import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: isDark ? '#020617' : '#f8fafc' }).catch(() => {});
+      }).catch(() => {});
     }
   }, [theme]);
 

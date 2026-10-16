@@ -10,6 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
+        id: '/',
+        start_url: '/',
+        scope: '/',
         name: 'Cardo Board — Spice Intelligence',
         short_name: 'Cardo Board',
         description: 'Real-time verified cardamom e-auctions, market telemetry, and Western Ghats climate models.',
@@ -19,21 +22,26 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: 'pwa-512x512.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
           },
         ],
       },
+      workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+      },
     }),
   ],
-  base: './', // Relative base path allows deployment on GitHub Pages, Vercel, Netlify, or custom subpaths
+  base: '/',
   server: {
     port: 3000,
     proxy: {
